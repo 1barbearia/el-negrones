@@ -54,7 +54,10 @@
         <div class="horarios-grid" id="grid-horarios"></div>
         
         <label>Seu Nome</label>
-        <input type="text" id="nome-cliente" placeholder="Como devemos te chamar?">
+<input type="text" id="nome-cliente" placeholder="Como devemos te chamar?">
+
+    <label>WhatsApp (Opcional)</label>
+    <input type="tel" id="whatsapp-cliente" placeholder="11999999999">
         
         <button class="btn-principal" onclick="confirmarAgendamento()">Confirmar Reserva</button>
     </div>
@@ -109,38 +112,69 @@
     }
 
     async function gerarHorarios() {
-        const data = document.getElementById("data-agenda").value;
-        const bId = document.getElementById("select-barbeiro").value;
-        const grid = document.getElementById("grid-horarios");
-        if(!bId || !data) return;
-        grid.innerHTML = "<div style='grid-column: span 3; color: var(--primary); font-size: 0.8rem; text-align: center;'>Consultando agenda...</div>";
-        
-        const agSnap = await db.collection("agenda").where("data", "==", data).where("barbeiroId", "==", bId).get();
-        const blSnap = await db.collection("bloqueios").where("data", "==", data).where("barbeiroId", "==", bId).get();
-        
-        const bloqueios = blSnap.docs.map(d => d.data().hora);
-        if(bloqueios.includes("DIA_TODO")) { 
-            grid.innerHTML = "<div style='grid-column: span 3; color: #ff4757; text-align:center; font-weight:bold;'>Sem horários disponíveis hoje</div>"; 
-            return; 
+    const dataSelecionada = document.getElementById("data-agenda").value;
+    const bId = document.getElementById("select-barbeiro").value;
+    const grid = document.getElementById("grid-horarios");
+    if(!bId || !dataSelecionada) return;
+
+    grid.innerHTML = "<div style='grid-column: span 3; color: var(--primary); font-size: 0.8rem; text-align: center;'>Consultando...</div>";
+    
+    const agSnap = await db.collection("agenda").where("data", "==", dataSelecionada).where("barbeiroId", "==", bId).get();
+    const blSnap = await db.collection("bloqueios").where("data", "==", dataSelecionada).where("barbeiroId", "==", bId).get();
+    
+    const ocupados = [...agSnap.docs.map(d => d.data().hora), ...blSnap.docs.map(d => d.data().hora)];
+    grid.innerHTML = "";
+
+    // Lógica de tempo (2 horas de antecedência)
+    const agora = new Date();
+    const hojeData = agora.toISOString().split('T')[0];
+    
+    horasBase.forEach(hora => {
+        let isPassado = false;
+
+        if (dataSelecionada === hojeData) {
+            const [h, m] = hora.split(':');
+            const dataHoraComparacao = new Date();
+            dataHoraComparacao.setHours(parseInt(h), parseInt(m), 0);
+
+            // Calcula a diferença em milissegundos (2 horas = 7200000ms)
+            const margemTempo = 2 * 60 * 60 * 1000; 
+            if (dataHoraComparacao.getTime() < (agora.getTime() + margemTempo)) {
+                isPassado = true;
+            }
         }
 
-        const ocupados = [...agSnap.docs.map(d => d.data().hora), ...bloqueios];
-        grid.innerHTML = "";
+        const isOcupado = ocupados.includes(hora) || ocupados.includes("DIA_TODO") || isPassado;
         
-        horasBase.forEach(hora => {
-            const isOcupado = ocupados.includes(hora);
-            const div = document.createElement("div");
-            div.className = "hora-btn " + (isOcupado ? "ocupada" : "");
-            div.textContent = hora;
-            div.onclick = () => {
-                if(isOcupado) return;
-                document.querySelectorAll(".hora-btn").forEach(e => e.classList.remove("selecionada"));
-                div.classList.add("selecionada"); horarioSelecionado = hora;
-            };
-            grid.appendChild(div);
-        });
-    }
+        const div = document.createElement("div");
+        div.className = "hora-btn " + (isOcupado ? "ocupada" : "");
+        div.textContent = hora;
+        div.onclick = () => {
+            if(isOcupado) return;
+            document.querySelectorAll(".hora-btn").forEach(e => e.classList.remove("selecionada"));
+            div.classList.add("selecionada"); horarioSelecionado = hora;
+        };
+        grid.appendChild(div);
+    });
+}
 
+// Atualize também a função de confirmarAgendamento para incluir o Whats:
+async function confirmarAgendamento() {
+    const nome = document.getElementById("nome-cliente").value;
+    const whatsapp = document.getElementById("whatsapp-cliente").value; // NOVO
+    // ... restando das variáveis ...
+
+    // No db.collection("agenda").add, adicione:
+    await db.collection("agenda").add({ 
+        cliente: nome, 
+        clienteWhatsapp: whatsapp, // NOVO
+        barbeiroId: bId, 
+        // ... restante ...
+    });
+    
+    // Na mensagem do Telegram, adicione o Whats para o dono ver:
+    const msg = `🚀 *NOVO AGENDAMENTO*\n\n👤 *Cliente:* ${nome}\n📱 *Whats:* ${whatsapp || 'Não informado'}\n...`;
+}
     async function confirmarAgendamento() {
         const nome = document.getElementById("nome-cliente").value;
         const bId = document.getElementById("select-barbeiro").value;
