@@ -28,11 +28,9 @@
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; margin: 0; padding: 0; }
         body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); line-height: 1.4; overflow-x: hidden; padding-bottom: 50px; }
 
-        /* LOGIN */
         #modal-login { position: fixed; inset: 0; background: radial-gradient(circle at center, #1a1a1a 0%, #050505 100%); display: flex; align-items: center; justify-content: center; z-index: 9999; }
         .login-box { width: 85%; max-width: 340px; text-align: center; padding: 40px 25px; background: var(--card); border-radius: 30px; border: 1px solid #222; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
 
-        /* NAVBAR */
         .top-nav-container { padding: 30px 15px; text-align: center; background: linear-gradient(to bottom, #111, transparent); }
         .logo-main { font-size: 1.6rem; font-weight: 900; letter-spacing: 5px; color: var(--primary); margin-bottom: 25px; }
         
@@ -41,11 +39,9 @@
         .tab-btn.active { background: #222; color: var(--primary); }
         .tab-btn.premium-active { background: var(--grad); color: #000; font-weight: 800; }
 
-        /* CONTENT */
         .content { padding: 20px 15px; max-width: 500px; margin: auto; animation: fadeIn 0.5s ease; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* CARDS */
         .card { background: var(--card); border-radius: 24px; padding: 22px; margin-bottom: 18px; border: 1px solid #252525; }
         .client-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
         .client-name { font-size: 1.1rem; font-weight: 800; color: #fff; text-transform: uppercase; }
@@ -55,10 +51,8 @@
         .label-mini { font-size: 0.6rem; font-weight: 800; color: var(--primary); text-transform: uppercase; display: block; margin-bottom: 2px; }
         .val-highlight { font-size: 0.85rem; font-weight: 600; color: #fff; }
 
-        /* FILTRO */
         .filtro-box { margin-bottom: 25px; background: #111; padding: 15px; border-radius: 20px; border: 1px solid #222; }
 
-        /* INPUTS & BUTTONS */
         label { display: block; font-size: 0.65rem; font-weight: 700; color: var(--primary); margin: 0 0 8px 10px; text-transform: uppercase; }
         input, select, textarea { width: 100%; padding: 16px; background: var(--input-bg); border: 1px solid #282828; border-radius: 16px; color: #fff; margin-bottom: 18px; font-size: 0.9rem; }
         .btn-action { width: 100%; padding: 18px; border-radius: 16px; border: none; background: var(--grad); color: #000; font-weight: 900; text-transform: uppercase; cursor: pointer; }
@@ -67,8 +61,8 @@
         .btn-whatsapp { color: var(--success); text-decoration: none; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; }
         .btn-del { color: var(--danger); font-size: 0.7rem; font-weight: 800; background: none; border: none; cursor: pointer; text-transform: uppercase; }
 
-        /* LISTAS */
         .item-list { display: flex; justify-content: space-between; align-items: center; padding: 15px; background: #181818; border-radius: 15px; margin-bottom: 10px; border: 1px solid #222; }
+        .btn-edit { color: var(--blue-action); font-size: 0.7rem; font-weight: 800; background: none; border: none; cursor: pointer; text-transform: uppercase; margin-right: 10px; }
     </style>
 </head>
 <body>
@@ -106,11 +100,14 @@
 
         <div id="tab-equipe" class="tab-content" style="display: none;">
             <div class="card">
+                <h3 id="titulo-editor-barbeiro" style="font-size: 0.8rem; margin-bottom: 15px; color: var(--primary);">CADASTRAR NOVO BARBEIRO</h3>
+                <input type="hidden" id="edit-id">
                 <label>Nome do Barbeiro</label>
                 <input id="b-nome" placeholder="Ex: Lucas">
-                <label>Serviços e Preços</label>
-                <textarea id="b-servs" rows="3" placeholder="Corte - R$ 35"></textarea>
-                <button class="btn-action" onclick="salvarBarbeiro()">Adicionar Barbeiro</button>
+                <label>Serviços e Preços (Ex: Corte - R$ 35)</label>
+                <textarea id="b-servs" rows="4" placeholder="Corte - R$ 35&#10;Barba - R$ 25&#10;Corte + Barba - R$ 50"></textarea>
+                <button id="btn-salvar-barbeiro" class="btn-action" onclick="salvarBarbeiro()">Adicionar Barbeiro</button>
+                <button id="btn-cancelar-edit" style="display:none; background:none; color:gray; border:none; width:100%; margin-top:10px; font-size:0.7rem; font-weight:bold; cursor:pointer;" onclick="limparFormBarbeiro()">CANCELAR EDIÇÃO</button>
             </div>
             <div id="render-equipe"></div>
         </div>
@@ -118,10 +115,24 @@
         <div id="tab-folgas" class="tab-content" style="display: none;">
             <div class="card">
                 <label>Profissional</label>
-                <select id="f-barbeiro"><option value="">Carregando...</option></select>
+                <select id="f-barbeiro"><option value="">Escolha...</option></select>
                 <label>Data</label>
                 <input type="date" id="f-data">
-                <button class="btn-action" style="background:var(--danger); color:#fff" onclick="salvarFolga()">Bloquear Dia Todo</button>
+                <label>Tipo de Bloqueio</label>
+                <select id="f-tipo" onchange="toggleHoraInput()">
+                    <option value="DIA_TODO">Bloquear Dia Todo</option>
+                    <option value="HORA_UNICA">Bloquear Horário Específico</option>
+                </select>
+                <div id="box-hora-especifica" style="display: none;">
+                    <label>Selecione o Horário</label>
+                    <select id="f-hora-select">
+                        <script>
+                            const hores = ["08:00","08:30","09:00","09:30","10:00","10:30","11:00","11:30","13:00","13:30","14:00","14:30","15:00","15:30","16:00","16:30","17:00","17:30","18:00","18:30","19:00"];
+                            hores.forEach(h => document.write(`<option value="${h}">${h}</option>`));
+                        </script>
+                    </select>
+                </div>
+                <button class="btn-action" style="background:var(--danger); color:#fff" onclick="salvarFolga()">Confirmar Bloqueio</button>
             </div>
             <div id="render-folgas"></div>
         </div>
@@ -155,6 +166,8 @@
         if(document.getElementById('senha-login').value === "4321") {
             document.getElementById('modal-login').style.display = 'none';
             document.getElementById('main-app').style.display = 'block';
+            const hoje = new Date().toISOString().split('T')[0];
+            document.getElementById('f-data').setAttribute('min', hoje);
             init();
         } else alert("Senha incorreta!");
     }
@@ -174,10 +187,14 @@
         verificarAssinatura();
     }
 
+    function toggleHoraInput() {
+        const tipo = document.getElementById('f-tipo').value;
+        document.getElementById('box-hora-especifica').style.display = tipo === 'HORA_UNICA' ? 'block' : 'none';
+    }
+
     async function carregarEquipe() {
         db.collection("barbeiros").onSnapshot(snap => {
             barbeirosLocal = snap.docs.map(doc => ({id: doc.id, ...doc.data()}));
-            
             const selectFolga = document.getElementById('f-barbeiro');
             const selectFiltro = document.getElementById('filtro-barbeiro-agenda');
             const renderEquipe = document.getElementById('render-equipe');
@@ -191,37 +208,70 @@
                 selectFiltro.innerHTML += `<option value="${b.id}">${b.nome}</option>`;
                 renderEquipe.innerHTML += `
                 <div class="item-list">
-                    <span><b>${b.nome}</b></span>
+                    <div style="flex:1">
+                        <b>${b.nome}</b>
+                        <p style="font-size:0.6rem; color:gray">${b.servicos ? b.servicos.substring(0, 30)+'...' : 'Sem serviços'}</p>
+                    </div>
+                    <button class="btn-edit" onclick="prepararEdicao('${b.id}')">Editar</button>
                     <button class="btn-del" onclick="excluir('barbeiros', '${b.id}')">Remover</button>
                 </div>`;
             });
         });
     }
 
+    function prepararEdicao(id) {
+        const b = barbeirosLocal.find(x => x.id === id);
+        document.getElementById('edit-id').value = b.id;
+        document.getElementById('b-nome').value = b.nome;
+        document.getElementById('b-servs').value = b.servicos || "";
+        document.getElementById('titulo-editor-barbeiro').innerText = "EDITANDO: " + b.nome.toUpperCase();
+        document.getElementById('btn-salvar-barbeiro').innerText = "Atualizar Barbeiro";
+        document.getElementById('btn-cancelar-edit').style.display = "block";
+        window.scrollTo(0,0);
+    }
+
+    function limparFormBarbeiro() {
+        document.getElementById('edit-id').value = "";
+        document.getElementById('b-nome').value = "";
+        document.getElementById('b-servs').value = "";
+        document.getElementById('titulo-editor-barbeiro').innerText = "CADASTRAR NOVO BARBEIRO";
+        document.getElementById('btn-salvar-barbeiro').innerText = "Adicionar Barbeiro";
+        document.getElementById('btn-cancelar-edit').style.display = "none";
+    }
+
+    async function salvarBarbeiro() {
+        const id = document.getElementById('edit-id').value;
+        const nome = document.getElementById('b-nome').value;
+        const servs = document.getElementById('b-servs').value;
+        
+        if(!nome) return alert("Digite o nome");
+
+        const dados = { nome, servicos: servs };
+
+        if(id) {
+            await db.collection("barbeiros").doc(id).update(dados);
+            alert("Barbeiro atualizado!");
+        } else {
+            await db.collection("barbeiros").add(dados);
+            alert("Barbeiro cadastrado!");
+        }
+        limparFormBarbeiro();
+    }
+
+    // ... (Demais funções de Agenda e Folga permanecem as mesmas)
     function carregarAgenda() {
         const filtroId = document.getElementById('filtro-barbeiro-agenda').value;
         let query = db.collection("agenda").orderBy("data", "asc");
-
-        if (filtroId !== "todos") {
-            query = query.where("barbeiroId", "==", filtroId);
-        }
-
+        if (filtroId !== "todos") query = query.where("barbeiroId", "==", filtroId);
         query.onSnapshot(snap => {
             const container = document.getElementById('render-agenda');
             container.innerHTML = snap.empty ? '<p style="text-align:center; padding:50px; color:gray;">Nenhum agendamento.</p>' : "";
-            
             snap.docs.forEach(doc => {
                 const ag = doc.data();
-                const foneLimpo = ag.clienteWhatsapp ? ag.clienteWhatsapp.replace(/\D/g,'') : '';
-                const linkWA = foneLimpo ? `<a href="https://wa.me/55${foneLimpo}" target="_blank" class="btn-whatsapp">📲 WhatsApp</a>` : `<span style="color:gray; font-size:0.6rem">Sem Whats</span>`;
-
                 container.innerHTML += `
                 <div class="card">
                     <div class="client-header">
-                        <div>
-                            <span class="label-mini">${ag.data.split('-').reverse().join('/')}</span>
-                            <h2 class="client-name">${ag.cliente}</h2>
-                        </div>
+                        <div><span class="label-mini">${ag.data.split('-').reverse().join('/')}</span><h2 class="client-name">${ag.cliente}</h2></div>
                         <div class="badge-time">${ag.hora}</div>
                     </div>
                     <div class="agenda-info-grid">
@@ -229,7 +279,7 @@
                         <div><span class="label-mini">Serviço</span><span class="val-highlight" style="color:var(--primary)">${ag.servico}</span></div>
                     </div>
                     <div class="footer-card">
-                        ${linkWA}
+                         <a href="https://wa.me/55${ag.clienteWhatsapp?.replace(/\D/g,'')}" target="_blank" class="btn-whatsapp">📲 WhatsApp</a>
                         <button class="btn-del" onclick="excluir('agenda', '${doc.id}')">Concluir</button>
                     </div>
                 </div>`;
@@ -237,31 +287,26 @@
         });
     }
 
-    async function salvarBarbeiro() {
-        const nome = document.getElementById('b-nome').value;
-        const servs = document.getElementById('b-servs').value;
-        if(!nome) return alert("Digite o nome");
-        await db.collection("barbeiros").add({ nome, servicos: servs });
-        document.getElementById('b-nome').value = "";
-        document.getElementById('b-servs').value = "";
-    }
-
     async function salvarFolga() {
         const bId = document.getElementById('f-barbeiro').value;
         const data = document.getElementById('f-data').value;
+        const tipo = document.getElementById('f-tipo').value;
+        const hora = document.getElementById('f-hora-select').value;
         if(!bId || !data) return alert("Selecione barbeiro e data");
-        await db.collection("bloqueios").add({ barbeiroId: bId, data, hora: "DIA_TODO" });
-        alert("Bloqueado!");
+        const valorHora = (tipo === "HORA_UNICA") ? hora : "DIA_TODO";
+        await db.collection("bloqueios").add({ barbeiroId: bId, data: data, hora: valorHora });
+        alert("Bloqueio realizado!");
     }
 
     function carregarFolgas() {
-        db.collection("bloqueios").orderBy("data", "desc").limit(5).onSnapshot(snap => {
+        db.collection("bloqueios").orderBy("data", "desc").limit(8).onSnapshot(snap => {
             const render = document.getElementById('render-folgas');
-            render.innerHTML = snap.empty ? "" : '<p style="margin:20px 0 10px; font-size:0.6rem; color:gray; text-transform:uppercase;">Bloqueios</p>';
+            render.innerHTML = snap.empty ? "" : '<p style="margin:20px 0 10px; font-size:0.6rem; color:gray; text-transform:uppercase;">Bloqueios Ativos</p>';
             snap.docs.forEach(doc => {
                 const f = doc.data();
                 const b = barbeirosLocal.find(x => x.id === f.barbeiroId);
-                render.innerHTML += `<div class="item-list" style="font-size:0.8rem"><span>${b?.nome} - ${f.data.split('-').reverse().join('/')}</span><button class="btn-del" onclick="excluir('bloqueios', '${doc.id}')">Remover</button></div>`;
+                const descHora = f.hora === "DIA_TODO" ? "Dia Todo" : f.hora;
+                render.innerHTML += `<div class="item-list" style="font-size:0.8rem"><span>${b?.nome} - ${f.data.split('-').reverse().join('/')} (${descHora})</span><button class="btn-del" onclick="excluir('bloqueios', '${doc.id}')">Remover</button></div>`;
             });
         });
     }
