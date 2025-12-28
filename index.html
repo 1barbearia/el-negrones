@@ -6,13 +6,9 @@
     <title>✂️ El Negrones | Agendamento</title>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
     <style>
-        :root { 
-            --primary: #c5a059; --bg: #0a0a0a; --card: #141414; 
-            --input-bg: #1d1d1d; --text: #ffffff; --text-dim: #999;
-            --whatsapp: #25d366; --grad: linear-gradient(135deg, #c5a059 0%, #a68549 100%);
-        }
+        :root { --primary: #c5a059; --bg: #0a0a0a; --card: #141414; --input-bg: #1d1d1d; --text: #ffffff; --text-dim: #999; --grad: linear-gradient(135deg, #c5a059 0%, #a68549 100%); }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 10px; display: flex; justify-content: center; }
         .container { width: 100%; max-width: 480px; padding-bottom: 50px; }
@@ -32,10 +28,7 @@
 <body>
 
 <div id="bloqueio-total">
-    <div style="padding: 30px;">
-        <h2 style="color: var(--primary); font-weight: 900;">SISTEMA EM PAUSA</h2>
-        <p style="color: var(--text-dim)">Estamos organizando a casa. Voltamos logo!</p>
-    </div>
+    <div style="padding: 30px;"><h2 style="color: var(--primary); font-weight: 900;">SISTEMA EM PAUSA</h2><p style="color: var(--text-dim)">Voltamos logo!</p></div>
 </div>
 
 <div class="container">
@@ -43,35 +36,22 @@
     <div class="card">
         <label>Profissional</label>
         <select id="select-barbeiro" onchange="atualizarServicos()"><option value="">Carregando...</option></select>
-        
         <label>Serviço</label>
         <select id="select-servico"><option value="">Escolha o profissional primeiro</option></select>
-        
         <label>Data</label>
         <input type="date" id="data-agenda" onchange="gerarHorarios()">
-        
-        <label>Horários Disponíveis</label>
+        <label>Horários Disponíveis (Min. 2h de antecedência)</label>
         <div class="horarios-grid" id="grid-horarios"></div>
-        
         <label>Seu Nome</label>
-<input type="text" id="nome-cliente" placeholder="Como devemos te chamar?">
-
-    <label>WhatsApp (Opcional)</label>
-    <input type="tel" id="whatsapp-cliente" placeholder="11999999999">
-        
+        <input type="text" id="nome-cliente" placeholder="Como devemos te chamar?">
+        <label>WhatsApp (Opcional)</label>
+        <input type="tel" id="whatsapp-cliente" placeholder="11999999999">
         <button class="btn-principal" onclick="confirmarAgendamento()">Confirmar Reserva</button>
     </div>
 </div>
 
 <script>
-    const firebaseConfig = { 
-        apiKey: "AIzaSyC0x8q1N7R70BYhfd2daedBjRKH0qupJiI",
-        authDomain: "elnes-720ce.firebaseapp.com",
-        projectId: "elnes-720ce",
-        storageBucket: "elnes-720ce.firebasestorage.app",
-        messagingSenderId: "839018097076",
-        appId: "1:839018097076:web:cc902e9081e3a35cac2ae1"
-    };
+    const firebaseConfig = { apiKey: "AIzaSyC0x8q1N7R70BYhfd2daedBjRKH0qupJiI", authDomain: "elnes-720ce.firebaseapp.com", projectId: "elnes-720ce", storageBucket: "elnes-720ce.firebasestorage.app", messagingSenderId: "839018097076", appId: "1:839018097076:web:cc902e9081e3a35cac2ae1" };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     
@@ -80,15 +60,6 @@
     const horasBase = ["09:00","09:30","10:00","10:30","11:00","11:30","12:00","12:30","13:00","13:30","14:00","14:30","15:00","15:30","16:00","16:30","17:00","17:30","18:00","18:30","19:00","19:30"];
 
     window.onload = async () => {
-        const config = await db.collection("configuracao").doc("assinatura").get();
-        if (config.exists) {
-            const dataInst = config.data().dataInstalacao.toDate();
-            const expira = new Date(dataInst);
-            expira.setDate(expira.getDate() + 7);
-            if (new Date() > expira) {
-                document.getElementById("bloqueio-total").style.display = "flex"; return;
-            }
-        }
         carregarBarbeiros();
         const hoje = new Date().toISOString().split("T")[0];
         document.getElementById('data-agenda').value = hoje;
@@ -112,110 +83,64 @@
     }
 
     async function gerarHorarios() {
-    const dataSelecionada = document.getElementById("data-agenda").value;
-    const bId = document.getElementById("select-barbeiro").value;
-    const grid = document.getElementById("grid-horarios");
-    if(!bId || !dataSelecionada) return;
+        const dataSel = document.getElementById("data-agenda").value;
+        const bId = document.getElementById("select-barbeiro").value;
+        const grid = document.getElementById("grid-horarios");
+        if(!bId || !dataSel) return;
 
-    grid.innerHTML = "<div style='grid-column: span 3; color: var(--primary); font-size: 0.8rem; text-align: center;'>Consultando...</div>";
-    
-    const agSnap = await db.collection("agenda").where("data", "==", dataSelecionada).where("barbeiroId", "==", bId).get();
-    const blSnap = await db.collection("bloqueios").where("data", "==", dataSelecionada).where("barbeiroId", "==", bId).get();
-    
-    const ocupados = [...agSnap.docs.map(d => d.data().hora), ...blSnap.docs.map(d => d.data().hora)];
-    grid.innerHTML = "";
-
-    // Lógica de tempo (2 horas de antecedência)
-    const agora = new Date();
-    const hojeData = agora.toISOString().split('T')[0];
-    
-    horasBase.forEach(hora => {
-        let isPassado = false;
-
-        if (dataSelecionada === hojeData) {
-            const [h, m] = hora.split(':');
-            const dataHoraComparacao = new Date();
-            dataHoraComparacao.setHours(parseInt(h), parseInt(m), 0);
-
-            // Calcula a diferença em milissegundos (2 horas = 7200000ms)
-            const margemTempo = 2 * 60 * 60 * 1000; 
-            if (dataHoraComparacao.getTime() < (agora.getTime() + margemTempo)) {
-                isPassado = true;
-            }
-        }
-
-        const isOcupado = ocupados.includes(hora) || ocupados.includes("DIA_TODO") || isPassado;
+        const agSnap = await db.collection("agenda").where("data", "==", dataSel).where("barbeiroId", "==", bId).get();
+        const blSnap = await db.collection("bloqueios").where("data", "==", dataSel).where("barbeiroId", "==", bId).get();
+        const ocupados = [...agSnap.docs.map(d => d.data().hora), ...blSnap.docs.map(d => d.data().hora)];
         
-        const div = document.createElement("div");
-        div.className = "hora-btn " + (isOcupado ? "ocupada" : "");
-        div.textContent = hora;
-        div.onclick = () => {
-            if(isOcupado) return;
-            document.querySelectorAll(".hora-btn").forEach(e => e.classList.remove("selecionada"));
-            div.classList.add("selecionada"); horarioSelecionado = hora;
-        };
-        grid.appendChild(div);
-    });
-}
+        grid.innerHTML = "";
+        const agora = new Date();
+        const hojeData = agora.toISOString().split('T')[0];
 
-// Atualize também a função de confirmarAgendamento para incluir o Whats:
-async function confirmarAgendamento() {
-    const nome = document.getElementById("nome-cliente").value;
-    const whatsapp = document.getElementById("whatsapp-cliente").value; // NOVO
-    // ... restando das variáveis ...
+        horasBase.forEach(hora => {
+            let indisponivel = ocupados.includes(hora) || ocupados.includes("DIA_TODO");
 
-    // No db.collection("agenda").add, adicione:
-    await db.collection("agenda").add({ 
-        cliente: nome, 
-        clienteWhatsapp: whatsapp, // NOVO
-        barbeiroId: bId, 
-        // ... restante ...
-    });
-    
-    // Na mensagem do Telegram, adicione o Whats para o dono ver:
-    const msg = `🚀 *NOVO AGENDAMENTO*\n\n👤 *Cliente:* ${nome}\n📱 *Whats:* ${whatsapp || 'Não informado'}\n...`;
-}
+            if (dataSel === hojeData) {
+                const [h, m] = hora.split(':');
+                const dataHoraComparacao = new Date();
+                dataHoraComparacao.setHours(parseInt(h), parseInt(m), 0);
+                const margem2h = 2 * 60 * 60 * 1000;
+                if (dataHoraComparacao.getTime() < (agora.getTime() + margem2h)) indisponivel = true;
+            }
+
+            const div = document.createElement("div");
+            div.className = "hora-btn " + (indisponivel ? "ocupada" : "");
+            div.textContent = hora;
+            div.onclick = () => {
+                if(indisponivel) return;
+                document.querySelectorAll(".hora-btn").forEach(e => e.classList.remove("selecionada"));
+                div.classList.add("selecionada"); horarioSelecionado = hora;
+            };
+            grid.appendChild(div);
+        });
+    }
+
     async function confirmarAgendamento() {
         const nome = document.getElementById("nome-cliente").value;
+        const whatsapp = document.getElementById("whatsapp-cliente").value;
         const bId = document.getElementById("select-barbeiro").value;
         const bNome = document.getElementById("select-barbeiro").options[document.getElementById("select-barbeiro").selectedIndex].text;
         const data = document.getElementById("data-agenda").value;
         const serv = document.getElementById("select-servico").value;
 
-        if(!nome || !horarioSelecionado || !bId || !serv) return alert("Por favor, preencha todos os campos!");
+        if(!nome || !horarioSelecionado || !bId || !serv) return alert("Preencha os campos obrigatórios!");
 
         try {
-            // 1. Salva no Firebase
-            await db.collection("agenda").add({ 
-                cliente: nome, barbeiroId: bId, barbeiroNome: bNome, 
-                data: data, hora: horarioSelecionado, servico: serv,
-                criadoEm: firebase.firestore.FieldValue.serverTimestamp()
-            });
+            await db.collection("agenda").add({ cliente: nome, clienteWhatsapp: whatsapp, barbeiroId: bId, barbeiroNome: bNome, data: data, hora: horarioSelecionado, servico: serv, criadoEm: firebase.firestore.FieldValue.serverTimestamp() });
 
-            // 2. NOTIFICAÇÃO TELEGRAM (CONFIGURAÇÃO FINAL)
             const BOT_TOKEN = "8474434417:AAGFJ78JXXE6bTCEQtYwZXWnErK3c5ub9vU"; 
             const CHAT_ID = "7905393233"; 
-            
-            const dataFormatada = data.split('-').reverse().join('/');
-            const msg = `🚀 *NOVO AGENDAMENTO - EL NEGRONES*\n\n` +
-                         `👤 *Cliente:* ${nome}\n` +
-                         `📅 *Data:* ${dataFormatada}\n` +
-                         `⏰ *Hora:* ${horarioSelecionado}\n` +
-                         `✂️ *Serviço:* ${serv}\n` +
-                         `💈 *Barbeiro:* ${bNome}`;
-
-            // URL Corrigida (Removido os $ extras que causavam erro)
+            const msg = `🚀 *NOVO AGENDAMENTO*\n\n👤 *Cliente:* ${nome}\n📱 *Whats:* ${whatsapp || 'Não informado'}\n📅 *Data:* ${data.split('-').reverse().join('/')}\n⏰ *Hora:* ${horarioSelecionado}\n✂️ *Serviço:* ${serv}\n💈 *Barbeiro:* ${bNome}`;
             const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage?chat_id=${CHAT_ID}&text=${encodeURIComponent(msg)}&parse_mode=Markdown`;
+            fetch(url);
 
-            // Envio para o Telegram
-            fetch(url).catch(err => console.error("Erro Telegram:", err));
-
-            alert("Agendamento realizado com sucesso! Te esperamos lá. ✂️");
+            alert("Agendamento realizado!");
             location.reload();
-        } catch (e) { 
-            console.error(e);
-            alert("Erro ao agendar. Tente novamente."); 
-        }
+        } catch (e) { alert("Erro ao agendar."); }
     }
 </script>
 </body>
