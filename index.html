@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>✂️ El Negrones | Agendamento</title>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root { 
+            --primary: #c5a059; --bg: #0a0a0a; --card: #141414; 
+            --input-bg: #1d1d1d; --text: #ffffff; --text-dim: #999;
+            --whatsapp: #25d366; --grad: linear-gradient(135deg, #c5a059 0%, #a68549 100%);
+        }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 10px; display: flex; justify-content: center; }
+        .container { width: 100%; max-width: 480px; padding-bottom: 50px; }
+        .header { text-align: center; padding: 40px 0 20px; }
+        .header h1 { font-weight: 900; font-size: 2rem; color: var(--primary); letter-spacing: 6px; margin: 0; }
+        .card { background: var(--card); padding: 25px; border-radius: 35px; border: 1px solid #222; }
+        label { font-size: 0.7rem; color: var(--primary); font-weight: 800; text-transform: uppercase; margin: 0 0 8px 10px; display: block; }
+        input, select { width: 100%; padding: 16px; margin-bottom: 20px; border-radius: 18px; border: 1px solid #282828; background: var(--input-bg); color: #fff; font-size: 1rem; outline: none; }
+        .horarios-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 25px; }
+        .hora-btn { background: #1a1a1a; padding: 15px 5px; text-align: center; border-radius: 15px; border: 1px solid #252525; cursor: pointer; color: var(--text-dim); transition: 0.3s; }
+        .hora-btn.selecionada { background: var(--grad); color: #000; font-weight: 800; border: none; transform: scale(1.05); }
+        .hora-btn.ocupada { background: #111; opacity: 0.3; color: #444; border: 1px dashed #222; cursor: not-allowed; }
+        .btn-principal { width: 100%; padding: 22px; border-radius: 20px; background: var(--grad); color: #000; font-weight: 900; border: none; cursor: pointer; text-transform: uppercase; font-size: 0.9rem; letter-spacing: 1px; }
+        #bloqueio-total { display: none; position: fixed; inset: 0; background: var(--bg); z-index: 9999; align-items: center; justify-content: center; text-align: center; }
+    </style>
+</head>
+<body>
+
+<div id="bloqueio-total">
+    <div style="padding: 30px;">
+        <h2 style="color: var(--primary); font-weight: 900;">SISTEMA EM PAUSA</h2>
+        <p style="color: var(--text-dim)">Estamos organizando a casa. Voltamos logo!</p>
+    </div>
+</div>
+
+<div class="container">
+    <div class="header"><h1>EL NEGRONES</h1><p>Barbearia & Estilo</p></div>
+    <div class="card">
+        <label>Profissional</label>
+        <select id="select-barbeiro" onchange="atualizarServicos()"><option value="">Carregando...</option></select>
+        
+        <label>Serviço</label>
+        <select id="select-servico"><option value="">Escolha o profissional primeiro</option></select>
+        
+        <label>Data</label>
+        <input type="date" id="data-agenda" onchange="gerarHorarios()">
+        
+        <label>Horários Disponíveis</label>
+        <div class="horarios-grid" id="grid-horarios"></div>
+        
+        <label>Seu Nome</label>
+        <input type="text" id="nome-cliente" placeholder="Como devemos te chamar?">
+        
+        <button class="btn-principal" onclick="confirmarAgendamento()">Confirmar Reserva</button>
+    </div>
+</div>
+
+<script>
+    const firebaseConfig = { 
+        apiKey: "AIzaSyC0x8q1N7R70BYhfd2daedBjRKH0qupJiI",
+        authDomain: "elnes-720ce.firebaseapp.com",
+        projectId: "elnes-720ce",
+        storageBucket: "elnes-720ce.firebasestorage.app",
+        messagingSenderId: "839018097076",
+        appId: "1:839018097076:web:cc902e9081e3a35cac2ae1"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    
+    let barbeirosData = [];
+    let horarioSelecionado = null;
+    const horasBase = ["09:00","09:30","10:00","10:30","11:00","11:30","12:00","12:30","13:00","13:30","14:00","14:30","15:00","15:30","16:00","16:30","17:00","17:30","18:00","18:30","19:00","19:30"];
+
+    window.onload = async () => {
+        const config = await db.collection("configuracao").doc("assinatura").get();
+        if (config.exists) {
+            const dataInst = config.data().dataInstalacao.toDate();
+            const expira = new Date(dataInst);
+            expira.setDate(expira.getDate() + 7);
+            if (new Date() > expira) {
+                document.getElementById("bloqueio-total").style.display = "flex"; return;
+            }
+        }
+        carregarBarbeiros();
+        const hoje = new Date().toISOString().split("T")[0];
+        document.getElementById('data-agenda').value = hoje;
+        document.getElementById('data-agenda').min = hoje;
+    };
+
+    async function carregarBarbeiros() {
+        const snap = await db.collection("barbeiros").get();
+        barbeirosData = snap.docs.map(doc => ({id: doc.id, ...doc.data()}));
+        const sB = document.getElementById("select-barbeiro");
+        sB.innerHTML = '<option value="">Selecione o Barbeiro</option>';
+        barbeirosData.forEach(b => sB.innerHTML += `<option value="${b.id}">${b.nome}</option>`);
+    }
+
+    function atualizarServicos() {
+        const b = barbeirosData.find(x => x.id === document.getElementById("select-barbeiro").value);
+        const sS = document.getElementById("select-servico");
+        sS.innerHTML = '<option value="">Selecione o Serviço</option>';
+        if(b && b.servicos) b.servicos.split('\n').forEach(s => { if(s.trim()) sS.innerHTML += `<option>${s.trim()}</option>`; });
+        gerarHorarios();
+    }
+
+    async function gerarHorarios() {
+        const data = document.getElementById("data-agenda").value;
+        const bId = document.getElementById("select-barbeiro").value;
+        const grid = document.getElementById("grid-horarios");
+        if(!bId || !data) return;
+        grid.innerHTML = "<div style='grid-column: span 3; color: var(--primary); font-size: 0.8rem; text-align: center;'>Consultando agenda...</div>";
+        
+        const agSnap = await db.collection("agenda").where("data", "==", data).where("barbeiroId", "==", bId).get();
+        const blSnap = await db.collection("bloqueios").where("data", "==", data).where("barbeiroId", "==", bId).get();
+        
+        const bloqueios = blSnap.docs.map(d => d.data().hora);
+        if(bloqueios.includes("DIA_TODO")) { 
+            grid.innerHTML = "<div style='grid-column: span 3; color: #ff4757; text-align:center; font-weight:bold;'>Sem horários disponíveis hoje</div>"; 
+            return; 
+        }
+
+        const ocupados = [...agSnap.docs.map(d => d.data().hora), ...bloqueios];
+        grid.innerHTML = "";
+        
+        horasBase.forEach(hora => {
+            const isOcupado = ocupados.includes(hora);
+            const div = document.createElement("div");
+            div.className = "hora-btn " + (isOcupado ? "ocupada" : "");
+            div.textContent = hora;
+            div.onclick = () => {
+                if(isOcupado) return;
+                document.querySelectorAll(".hora-btn").forEach(e => e.classList.remove("selecionada"));
+                div.classList.add("selecionada"); horarioSelecionado = hora;
+            };
+            grid.appendChild(div);
+        });
+    }
+
+    async function confirmarAgendamento() {
+        const nome = document.getElementById("nome-cliente").value;
+        const bId = document.getElementById("select-barbeiro").value;
+        const bNome = document.getElementById("select-barbeiro").options[document.getElementById("select-barbeiro").selectedIndex].text;
+        const data = document.getElementById("data-agenda").value;
+        const serv = document.getElementById("select-servico").value;
+
+        if(!nome || !horarioSelecionado || !bId || !serv) return alert("Por favor, preencha todos os campos!");
+
+        try {
+            // 1. Salva no Firebase
+            await db.collection("agenda").add({ 
+                cliente: nome, barbeiroId: bId, barbeiroNome: bNome, 
+                data: data, hora: horarioSelecionado, servico: serv,
+                criadoEm: firebase.firestore.FieldValue.serverTimestamp()
+            });
+
+            // 2. NOTIFICAÇÃO TELEGRAM (CONFIGURAÇÃO FINAL)
+            const BOT_TOKEN = "8474434417:AAGFJ78JXXE6bTCEQtYwZXWnErK3c5ub9vU"; 
+            const CHAT_ID = "7905393233"; 
+            
+            const dataFormatada = data.split('-').reverse().join('/');
+            const msg = `🚀 *NOVO AGENDAMENTO - EL NEGRONES*\n\n` +
+                         `👤 *Cliente:* ${nome}\n` +
+                         `📅 *Data:* ${dataFormatada}\n` +
+                         `⏰ *Hora:* ${horarioSelecionado}\n` +
+                         `✂️ *Serviço:* ${serv}\n` +
+                         `💈 *Barbeiro:* ${bNome}`;
+
+            // URL Corrigida (Removido os $ extras que causavam erro)
+            const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage?chat_id=${CHAT_ID}&text=${encodeURIComponent(msg)}&parse_mode=Markdown`;
+
+            // Envio para o Telegram
+            fetch(url).catch(err => console.error("Erro Telegram:", err));
+
+            alert("Agendamento realizado com sucesso! Te esperamos lá. ✂️");
+            location.reload();
+        } catch (e) { 
+            console.error(e);
+            alert("Erro ao agendar. Tente novamente."); 
+        }
+    }
+</script>
+</body>
+</html>
