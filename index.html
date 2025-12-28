@@ -22,16 +22,29 @@
         .hora-btn.selecionada { background: var(--grad); color: #000; font-weight: 800; border: none; transform: scale(1.05); }
         .hora-btn.ocupada { background: #111; opacity: 0.3; color: #444; border: 1px dashed #222; cursor: not-allowed; }
         .btn-principal { width: 100%; padding: 22px; border-radius: 20px; background: var(--grad); color: #000; font-weight: 900; border: none; cursor: pointer; text-transform: uppercase; font-size: 0.9rem; letter-spacing: 1px; }
-        #bloqueio-total { display: none; position: fixed; inset: 0; background: var(--bg); z-index: 9999; align-items: center; justify-content: center; text-align: center; }
+        
+        /* TELA DE BLOQUEIO */
+        #bloqueio-total { 
+            display: none; position: fixed; inset: 0; background: #050505; z-index: 9999; 
+            align-items: center; justify-content: center; text-align: center; font-family: 'Inter', sans-serif;
+        }
+        .btn-pagamento {
+            display: inline-block; background: var(--grad); color: #000; padding: 15px 30px; 
+            border-radius: 12px; text-decoration: none; font-weight: 900; margin-top: 20px;
+        }
     </style>
 </head>
 <body>
 
 <div id="bloqueio-total">
-    <div style="padding: 30px;"><h2 style="color: var(--primary); font-weight: 900;">SISTEMA EM PAUSA</h2><p style="color: var(--text-dim)">Voltamos logo!</p></div>
+    <div style="padding: 30px;">
+        <h1 style="color: var(--primary); font-size: 3rem; margin-bottom: 10px;">⚠️</h1>
+        <h2 style="color: #fff; font-weight: 900;">SISTEMA INDISPONÍVEL</h2>
+        <p style="color: var(--text-dim); max-width: 300px; margin: auto;">O sistema de agendamentos está em manutenção...</p> 
+    </div>
 </div>
 
-<div class="container">
+<div class="container" id="app-content">
     <div class="header"><h1>EL NEGRONES</h1><p>Barbearia & Estilo</p></div>
     <div class="card">
         <label>Profissional</label>
@@ -57,14 +70,33 @@
     
     let barbeirosData = [];
     let horarioSelecionado = null;
+    let sistemaAtivo = true;
     const horasBase = ["09:00","09:30","10:00","10:30","11:00","11:30","12:00","12:30","13:00","13:30","14:00","14:30","15:00","15:30","16:00","16:30","17:00","17:30","18:00","18:30","19:00","19:30"];
 
     window.onload = async () => {
+        await verificarAssinatura(); // Verifica a licença antes de tudo
+        if(!sistemaAtivo) return;
+
         carregarBarbeiros();
         const hoje = new Date().toISOString().split("T")[0];
         document.getElementById('data-agenda').value = hoje;
         document.getElementById('data-agenda').min = hoje;
     };
+
+    async function verificarAssinatura() {
+        const doc = await db.collection("configuracao").doc("assinatura").get();
+        if(doc.exists) {
+            const dataInst = doc.data().dataInstalacao.toDate();
+            const expira = new Date(dataInst);
+            expira.setDate(expira.getDate() + 7); // Período de 7 dias
+
+            if (new Date() > expira) {
+                sistemaAtivo = false;
+                document.getElementById('bloqueio-total').style.display = 'flex';
+                document.getElementById('app-content').style.display = 'none';
+            }
+        }
+    }
 
     async function carregarBarbeiros() {
         const snap = await db.collection("barbeiros").get();
@@ -120,6 +152,8 @@
     }
 
     async function confirmarAgendamento() {
+        if(!sistemaAtivo) return alert("Sistema indisponível.");
+
         const nome = document.getElementById("nome-cliente").value;
         const whatsapp = document.getElementById("whatsapp-cliente").value;
         const bId = document.getElementById("select-barbeiro").value;
