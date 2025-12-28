@@ -311,15 +311,73 @@
         });
     }
 
-    async function verificarAssinatura() {
-        const doc = await db.collection("configuracao").doc("assinatura").get();
-        if(doc.exists) {
-            const dataInst = doc.data().dataInstalacao.toDate();
-            const expira = new Date(dataInst); expira.setDate(expira.getDate() + 7);
-            const resta = Math.ceil((expira - new Date()) / (1000 * 60 * 60 * 24));
-            document.getElementById('txt-restam').innerText = resta <= 0 ? 'Assinatura expirada.' : `Licença expira em ${resta} dias.`;
+    // Adicione este estilo no seu <style> para a tela de bloqueio
+/*
+.bloqueio-total {
+    position: fixed; inset: 0; background: #000; z-index: 10000;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; color: white; padding: 20px;
+}
+*/
+
+// Substitua a sua função verificarAssinatura por esta
+async function verificarAssinatura() {
+    const doc = await db.collection("configuracao").doc("assinatura").get();
+    if(doc.exists) {
+        const dataInst = doc.data().dataInstalacao.toDate();
+        const expira = new Date(dataInst);  
+        expira.setDate(expira.getDate() + 7); // Período de 7 dias
+        
+        const hoje = new Date();
+        const resta = Math.ceil((expira - hoje) / (1000 * 60 * 60 * 24));
+
+        if (resta <= 0) {
+            // BLOQUEIO TOTAL DA TELA
+            document.body.innerHTML = `
+                <div style="height:100vh; background:#050505; color:white; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; font-family:'Inter', sans-serif; padding:30px;">
+                    <div style="font-size: 5rem; margin-bottom: 20px;">🔒</div>
+                    <h1 style="color:var(--primary); font-weight:900; letter-spacing:2px;">ASSINATURA EXPIRADA</h1>
+                    <p style="color:#a0a0a0; max-width:350px; margin: 15px 0 30px 0; line-height:1.6;">
+                        O período de licença do sistema <b>El Negrones</b> chegou ao fim. 
+                        Para continuar gerenciando sua agenda e recebendo clientes, realize o pagamento abaixo.
+                    </p>
+                    <a href="https://mpago.la/1bCHsKA" target="_blank" 
+                       style="background:linear-gradient(135deg, #c5a059 0%, #a68549 100%); color:black; padding:20px 40px; border-radius:15px; text-decoration:none; font-weight:900; width:100%; max-width:300px; box-shadow: 0 10px 20px rgba(197,160,89,0.3);">
+                       RENOVAR AGORA
+                    </a>
+                    <p style="margin-top:20px; font-size:0.7rem; color:gray;">O desbloqueio ocorre após a confirmação do pagamento.</p>
+                </div>
+            `;
+            return false; // Retorna falso para indicar que está bloqueado
+        } else {
+            document.getElementById('txt-restam').innerText = `Licença expira em ${resta} dias.`;
+            return true;
         }
     }
+}
+
+// Adicione esta trava nas suas funções de salvar (Exemplo na salvarBarbeiro)
+async function salvarBarbeiro() {
+    // Verifica assinatura antes de qualquer ação no banco
+    const ativo = await verificarAssinatura();
+    if(!ativo) return; 
+
+    const id = document.getElementById('edit-id').value;
+    const nome = document.getElementById('b-nome').value;
+    const servs = document.getElementById('b-servs').value;
+    
+    if(!nome) return alert("Digite o nome");
+    const dados = { nome, servicos: servs };
+
+    if(id) {
+        await db.collection("barbeiros").doc(id).update(dados);
+        alert("Barbeiro atualizado!");
+    } else {
+        await db.collection("barbeiros").add(dados);
+        alert("Barbeiro cadastrado!");
+    }
+    limparFormBarbeiro();
+}
 
     async function excluir(col, id) { if(confirm("Confirmar exclusão?")) await db.collection(col).doc(id).delete(); }
 </script>
