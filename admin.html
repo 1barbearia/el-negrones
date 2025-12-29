@@ -181,34 +181,36 @@
         await carregarEquipe(); 
         carregarAgenda();
         carregarFolgas();
-        verificarAssinatura(); // Checa o premiumAte
+        verificarAssinatura(); 
     }
 
-    // --- LÓGICA DE ASSINATURA (TESTE + PREMIUM) ---
+    // --- LÓGICA DE ASSINATURA ATUALIZADA (30 DIAS + STATUS ATIVO) ---
 
     async function verificarAssinatura() {
-        // Documento central de controle
         const docRef = db.collection("configuracao").doc("assinatura");
         const doc = await docRef.get();
         let dataLimite;
 
         if(!doc.exists) {
-            // Se for a primeira vez, cria 7 DIAS GRÁTIS
+            // SE FOR A PRIMEIRA VEZ, CRIA 30 DIAS GRÁTIS
             const hoje = new Date();
             dataLimite = new Date();
-            dataLimite.setDate(hoje.getDate() + 7); 
+            dataLimite.setDate(hoje.getDate() + 30); 
             
             await docRef.set({
                 premiumAte: firebase.firestore.Timestamp.fromDate(dataLimite),
-                status: "teste_gratis"
+                status: "Ativo",
+                dataInstalacao: firebase.firestore.Timestamp.fromDate(hoje)
             });
         } else {
-            // Pega a data salva no campo 'premiumAte'
+            // Pega a data salva no campo 'premiumAte' no Firebase
             dataLimite = doc.data().premiumAte.toDate();
         }
 
         const hoje = new Date();
         const resta = Math.ceil((dataLimite - hoje) / (1000 * 60 * 60 * 24));
+        const statusAtual = doc.exists ? (doc.data().status || "Ativo") : "Ativo";
+        const vencimentoFormatado = dataLimite.toLocaleDateString('pt-BR');
 
         if (resta <= 0) {
             // BLOQUEIO TOTAL
@@ -217,7 +219,7 @@
                     <div style="font-size: 5rem; margin-bottom: 20px;">🔒</div>
                     <h1 style="color:var(--primary); font-weight:900; letter-spacing:2px;">ASSINATURA EXPIRADA</h1>
                     <p style="color:#a0a0a0; max-width:350px; margin: 15px 0 30px 0; line-height:1.6;">
-                        Sua licença El Negrones venceu. Para continuar usando o painel, realize a renovação.
+                        Sua licença El Negrones venceu em ${vencimentoFormatado}. Para continuar usando o painel, realize a renovação.
                     </p>
                     <a href="https://mpago.la/1bCHsKA" target="_blank" 
                        style="background:linear-gradient(135deg, #c5a059 0%, #a68549 100%); color:black; padding:20px 40px; border-radius:15px; text-decoration:none; font-weight:900; width:100%; max-width:300px;">
@@ -227,7 +229,12 @@
             `;
             return false;
         } else {
-            document.getElementById('txt-restam').innerText = `Seu plano está ativo por mais ${resta} dias.`;
+            // EXIBE STATUS ATIVO E DIAS RESTANTES
+            document.getElementById('txt-restam').innerHTML = `
+                <span style="color:var(--success); font-weight:800; display:block; margin-bottom:5px; font-size:1.2rem;">STATUS: ${statusAtual.toUpperCase()}</span>
+                <span style="color:var(--text-dim); display:block; margin-bottom:15px;">Vence em: ${vencimentoFormatado}</span>
+                Seu acesso está liberado por mais ${resta} dias.
+            `;
             return true;
         }
     }
@@ -341,10 +348,10 @@
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active', 'premium-active'));
         if(tab === 'premium') el.classList.add('premium-active'); else el.classList.add('active');
     }
-
+ 
     function toggleHoraInput() {
-        const tipo = document.getElementById('f-tipo').value;
-        document.getElementById('box-hora-especifica').style.display = tipo === 'HORA_UNICA' ? 'block' : 'none';
+        const tipo = document.getElementById('f-tipo').value; 
+        document.getElementById('box-hora-especifica').style.display = tipo === 'HORA_UNICA' ? 'block' : 'none'; 
     }
 
     function prepararEdicao(id) {
