@@ -40,35 +40,48 @@
     <div class="card">
         <label>Profissional</label>
         <select id="select-barbeiro" onchange="atualizarServicos()"><option value="">Carregando...</option></select>
+        
         <label>Serviço</label>
         <select id="select-servico"><option value="">Escolha o profissional primeiro</option></select>
+        
         <label>Data</label>
         <input type="date" id="data-agenda" onchange="gerarHorarios()">
+        
         <label>Horários Disponíveis (Min. 2h de antecedência)</label>
         <div class="horarios-grid" id="grid-horarios"></div>
+        
         <label>Seu Nome</label>
         <input type="text" id="nome-cliente" placeholder="Como devemos te chamar?">
+        
         <label>WhatsApp</label>
         <input type="tel" id="whatsapp-cliente" placeholder="11999999999">
+        
         <button class="btn-principal" id="btn-confirmar" onclick="confirmarAgendamento()">Confirmar Reserva</button>
     </div>
 </div>
 
 <script>
-    const firebaseConfig = { apiKey: "AIzaSyC0x8q1N7R70BYhfd2daedBjRKH0qupJiI", authDomain: "elnes-720ce.firebaseapp.com", projectId: "elnes-720ce", storageBucket: "elnes-720ce.firebasestorage.app", messagingSenderId: "839018097076", appId: "1:839018097076:web:cc902e9081e3a35cac2ae1" };
+    const firebaseConfig = { 
+        apiKey: "AIzaSyC0x8q1N7R70BYhfd2daedBjRKH0qupJiI", 
+        authDomain: "elnes-720ce.firebaseapp.com", 
+        projectId: "elnes-720ce", 
+        storageBucket: "elnes-720ce.firebasestorage.app", 
+        messagingSenderId: "839018097076", 
+        appId: "1:839018097076:web:cc902e9081e3a35cac2ae1" 
+    };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     
     let barbeirosData = [];
     let horarioSelecionado = null;
     let sistemaAtivo = true;
-    let configTelegram = { token: "", chatId: "" };
+    let botTokenGlobal = "";
     const horasBase = ["09:00","09:30","10:00","10:30","11:00","11:30","12:00","12:30","13:00","13:30","14:00","14:30","15:00","15:30","16:00","16:30","17:00","17:30","18:00","18:30","19:00","19:30"];
 
     window.onload = async () => {
         await verificarAssinatura();
         if(!sistemaAtivo) return;
-        await carregarConfigBot();
+        await carregarTokenBot(); 
         carregarBarbeiros();
         const hoje = new Date().toISOString().split("T")[0];
         document.getElementById('data-agenda').value = hoje;
@@ -88,9 +101,9 @@
         }
     }
 
-    async function carregarConfigBot() {
+    async function carregarTokenBot() {
         const doc = await db.collection("configuracao").doc("telegram").get();
-        if(doc.exists) configTelegram = doc.data();
+        if(doc.exists) botTokenGlobal = doc.data().token;
     }
 
     async function carregarBarbeiros() {
@@ -148,7 +161,11 @@
         const nome = document.getElementById("nome-cliente").value;
         const whatsapp = document.getElementById("whatsapp-cliente").value;
         const bId = document.getElementById("select-barbeiro").value;
-        const bNome = document.getElementById("select-barbeiro").options[document.getElementById("select-barbeiro").selectedIndex].text;
+        
+        const bAlvo = barbeirosData.find(x => x.id === bId);
+        const bNome = bAlvo ? bAlvo.nome : "";
+        const chatIdB = bAlvo ? bAlvo.chatId : null;
+
         const data = document.getElementById("data-agenda").value;
         const serv = document.getElementById("select-servico").value;
 
@@ -158,12 +175,21 @@
         btn.innerText = "PROCESSANDO...";
 
         try {
-            await db.collection("agenda").add({ cliente: nome, clienteWhatsapp: whatsapp, barbeiroId: bId, barbeiroNome: bNome, data: data, hora: horarioSelecionado, servico: serv, criadoEm: firebase.firestore.FieldValue.serverTimestamp() });
+            await db.collection("agenda").add({ 
+                cliente: nome, 
+                clienteWhatsapp: whatsapp, 
+                barbeiroId: bId, 
+                barbeiroNome: bNome, 
+                data: data, 
+                hora: horarioSelecionado, 
+                servico: serv, 
+                criadoEm: firebase.firestore.FieldValue.serverTimestamp() 
+            });
             
-            if(configTelegram.token && configTelegram.chatId) {
+            if(botTokenGlobal && chatIdB) {
                 const msg = `🚀 *NOVO AGENDAMENTO*\n\n👤 *Cliente:* ${nome}\n📱 *Whats:* ${whatsapp || 'Não informado'}\n📅 *Data:* ${data.split('-').reverse().join('/')}\n⏰ *Hora:* ${horarioSelecionado}\n✂️ *Serviço:* ${serv}\n💈 *Barbeiro:* ${bNome}`;
-                const url = `https://api.telegram.org/bot${configTelegram.token}/sendMessage?chat_id=${configTelegram.chatId}&text=${encodeURIComponent(msg)}&parse_mode=Markdown`;
-                fetch(url);
+                const url = `https://api.telegram.org/bot${botTokenGlobal}/sendMessage?chat_id=${chatIdB}&text=${encodeURIComponent(msg)}&parse_mode=Markdown`;
+                fetch(url).catch(e => console.log("Erro bot"));
             }
 
             alert("Reserva confirmada com sucesso!");
