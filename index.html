@@ -22,16 +22,7 @@
         .hora-btn.selecionada { background: var(--grad); color: #000; font-weight: 800; border: none; transform: scale(1.05); }
         .hora-btn.ocupada { background: #111; opacity: 0.3; color: #444; border: 1px dashed #222; cursor: not-allowed; }
         .btn-principal { width: 100%; padding: 22px; border-radius: 20px; background: var(--grad); color: #000; font-weight: 900; border: none; cursor: pointer; text-transform: uppercase; font-size: 0.9rem; letter-spacing: 1px; }
-        
-        /* TELA DE BLOQUEIO */
-        #bloqueio-total { 
-            display: none; position: fixed; inset: 0; background: #050505; z-index: 9999; 
-            align-items: center; justify-content: center; text-align: center; font-family: 'Inter', sans-serif;
-        }
-        .btn-pagamento {
-            display: inline-block; background: var(--grad); color: #000; padding: 15px 30px; 
-            border-radius: 12px; text-decoration: none; font-weight: 900; margin-top: 20px;
-        }
+        #bloqueio-total { display: none; position: fixed; inset: 0; background: #050505; z-index: 9999; align-items: center; justify-content: center; text-align: center; }
     </style>
 </head>
 <body>
@@ -40,7 +31,7 @@
     <div style="padding: 30px;">
         <h1 style="color: var(--primary); font-size: 3rem; margin-bottom: 10px;">⚠️</h1>
         <h2 style="color: #fff; font-weight: 900;">SISTEMA INDISPONÍVEL</h2>
-        <p style="color: var(--text-dim); max-width: 300px; margin: auto;">O sistema de agendamentos está em manutenção...</p> 
+        <p style="color: var(--text-dim); max-width: 300px; margin: auto;">O sistema de agendamentos está temporariamente suspenso.</p> 
     </div>
 </div>
 
@@ -57,9 +48,9 @@
         <div class="horarios-grid" id="grid-horarios"></div>
         <label>Seu Nome</label>
         <input type="text" id="nome-cliente" placeholder="Como devemos te chamar?">
-        <label>WhatsApp (Opcional)</label>
+        <label>WhatsApp</label>
         <input type="tel" id="whatsapp-cliente" placeholder="11999999999">
-        <button class="btn-principal" onclick="confirmarAgendamento()">Confirmar Reserva</button>
+        <button class="btn-principal" id="btn-confirmar" onclick="confirmarAgendamento()">Confirmar Reserva</button>
     </div>
 </div>
 
@@ -71,12 +62,13 @@
     let barbeirosData = [];
     let horarioSelecionado = null;
     let sistemaAtivo = true;
+    let configTelegram = { token: "", chatId: "" };
     const horasBase = ["09:00","09:30","10:00","10:30","11:00","11:30","12:00","12:30","13:00","13:30","14:00","14:30","15:00","15:30","16:00","16:30","17:00","17:30","18:00","18:30","19:00","19:30"];
 
     window.onload = async () => {
-        await verificarAssinatura(); // Verifica a licença antes de tudo
+        await verificarAssinatura();
         if(!sistemaAtivo) return;
-
+        await carregarConfigBot();
         carregarBarbeiros();
         const hoje = new Date().toISOString().split("T")[0];
         document.getElementById('data-agenda').value = hoje;
@@ -86,16 +78,19 @@
     async function verificarAssinatura() {
         const doc = await db.collection("configuracao").doc("assinatura").get();
         if(doc.exists) {
-            const dataInst = doc.data().dataInstalacao.toDate();
-            const expira = new Date(dataInst);
-            expira.setDate(expira.getDate() + 7); // Período de 7 dias
-
+            const data = doc.data();
+            let expira = data.premiumAte ? data.premiumAte.toDate() : new Date(data.dataInstalacao.toDate().getTime() + 30 * 24 * 60 * 60 * 1000);
             if (new Date() > expira) {
                 sistemaAtivo = false;
                 document.getElementById('bloqueio-total').style.display = 'flex';
                 document.getElementById('app-content').style.display = 'none';
             }
         }
+    }
+
+    async function carregarConfigBot() {
+        const doc = await db.collection("configuracao").doc("telegram").get();
+        if(doc.exists) configTelegram = doc.data();
     }
 
     async function carregarBarbeiros() {
@@ -130,15 +125,12 @@
 
         horasBase.forEach(hora => {
             let indisponivel = ocupados.includes(hora) || ocupados.includes("DIA_TODO");
-
             if (dataSel === hojeData) {
                 const [h, m] = hora.split(':');
-                const dataHoraComparacao = new Date();
-                dataHoraComparacao.setHours(parseInt(h), parseInt(m), 0);
-                const margem2h = 2 * 60 * 60 * 1000;
-                if (dataHoraComparacao.getTime() < (agora.getTime() + margem2h)) indisponivel = true;
+                const dataHoraComp = new Date();
+                dataHoraComp.setHours(parseInt(h), parseInt(m), 0);
+                if (dataHoraComp.getTime() < (agora.getTime() + 2 * 60 * 60 * 1000)) indisponivel = true;
             }
-
             const div = document.createElement("div");
             div.className = "hora-btn " + (indisponivel ? "ocupada" : "");
             div.textContent = hora;
@@ -152,8 +144,7 @@
     }
 
     async function confirmarAgendamento() {
-        if(!sistemaAtivo) return alert("Sistema indisponível.");
-
+        const btn = document.getElementById("btn-confirmar");
         const nome = document.getElementById("nome-cliente").value;
         const whatsapp = document.getElementById("whatsapp-cliente").value;
         const bId = document.getElementById("select-barbeiro").value;
@@ -161,20 +152,23 @@
         const data = document.getElementById("data-agenda").value;
         const serv = document.getElementById("select-servico").value;
 
-        if(!nome || !horarioSelecionado || !bId || !serv) return alert("Preencha os campos obrigatórios!");
+        if(!nome || !horarioSelecionado || !bId || !serv) return alert("Preencha todos os campos!");
+
+        btn.disabled = true;
+        btn.innerText = "PROCESSANDO...";
 
         try {
             await db.collection("agenda").add({ cliente: nome, clienteWhatsapp: whatsapp, barbeiroId: bId, barbeiroNome: bNome, data: data, hora: horarioSelecionado, servico: serv, criadoEm: firebase.firestore.FieldValue.serverTimestamp() });
+            
+            if(configTelegram.token && configTelegram.chatId) {
+                const msg = `🚀 *NOVO AGENDAMENTO*\n\n👤 *Cliente:* ${nome}\n📱 *Whats:* ${whatsapp || 'Não informado'}\n📅 *Data:* ${data.split('-').reverse().join('/')}\n⏰ *Hora:* ${horarioSelecionado}\n✂️ *Serviço:* ${serv}\n💈 *Barbeiro:* ${bNome}`;
+                const url = `https://api.telegram.org/bot${configTelegram.token}/sendMessage?chat_id=${configTelegram.chatId}&text=${encodeURIComponent(msg)}&parse_mode=Markdown`;
+                fetch(url);
+            }
 
-            const BOT_TOKEN = "8474434417:AAGFJ78JXXE6bTCEQtYwZXWnErK3c5ub9vU"; 
-            const CHAT_ID = "7905393233"; 
-            const msg = `🚀 *NOVO AGENDAMENTO*\n\n👤 *Cliente:* ${nome}\n📱 *Whats:* ${whatsapp || 'Não informado'}\n📅 *Data:* ${data.split('-').reverse().join('/')}\n⏰ *Hora:* ${horarioSelecionado}\n✂️ *Serviço:* ${serv}\n💈 *Barbeiro:* ${bNome}`;
-            const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage?chat_id=${CHAT_ID}&text=${encodeURIComponent(msg)}&parse_mode=Markdown`;
-            fetch(url);
-
-            alert("Agendamento realizado!");
+            alert("Reserva confirmada com sucesso!");
             location.reload();
-        } catch (e) { alert("Erro ao agendar."); }
+        } catch (e) { alert("Erro ao agendar."); btn.disabled = false; btn.innerText = "Confirmar Reserva"; }
     }
 </script>
 </body>
