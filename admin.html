@@ -187,12 +187,57 @@
     }
 
     // --- NOVA FUNÇÃO: CARREGAR DADOS DO BOT ---
+    // --- FUNÇÃO CARREGAR DADOS DO BOT (COM MÁSCARA) ---
     async function carregarDadosBot() {
         const doc = await db.collection("configuracao").doc("telegram").get();
         if(doc.exists) {
-            document.getElementById('conf-telegram-token').value = doc.data().token || "";
-            document.getElementById('conf-telegram-chatid').value = doc.data().chatId || "";
+            const campoToken = document.getElementById('conf-telegram-token');
+            const campoChatId = document.getElementById('conf-telegram-chatid');
+            
+            // Define o valor e bloqueia os campos
+            campoToken.value = "********"; 
+            campoChatId.value = "********";
+            campoToken.disabled = true;
+            campoChatId.disabled = true;
+
+            // Altera o botão para modo "Editar" se já houver dados
+            const btn = document.querySelector("button[onclick='salvarConfiguracoesBot()']");
+            btn.innerText = "Editar Configurações";
+            btn.setAttribute("onclick", "liberarEdicaoBot(this)");
         }
+    }
+
+    // --- FUNÇÃO PARA LIBERAR OS CAMPOS ---
+    function liberarEdicaoBot(btn) {
+        const campoToken = document.getElementById('conf-telegram-token');
+        const campoChatId = document.getElementById('conf-telegram-chatid');
+        
+        campoToken.value = "";
+        campoChatId.value = "";
+        campoToken.disabled = false;
+        campoChatId.disabled = false;
+        campoToken.placeholder = "Digite o novo Token";
+        campoChatId.placeholder = "Digite o novo Chat ID";
+        
+        btn.innerText = "Salvar Configurações";
+        btn.setAttribute("onclick", "salvarConfiguracoesBot()");
+    }
+
+    // --- FUNÇÃO SALVAR DADOS DO BOT (BLOQUEIA APÓS SALVAR) ---
+    async function salvarConfiguracoesBot() {
+        const token = document.getElementById('conf-telegram-token').value;
+        const chatId = document.getElementById('conf-telegram-chatid').value;
+        
+        if(!token || !chatId || token === "********") return alert("Insira dados válidos!");
+        
+        await db.collection("configuracao").doc("telegram").set({
+            token: token,
+            chatId: chatId,
+            atualizadoEm: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        alert("Configurações de notificação salvas!");
+        carregarDadosBot(); // Bloqueia e esconde os dados novamente
     }
 
     // --- NOVA FUNÇÃO: SALVAR DADOS DO BOT ---
