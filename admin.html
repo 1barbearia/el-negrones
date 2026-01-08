@@ -12,50 +12,38 @@
 
     <style>
         :root {
-            --primary: #c5a059; 
-            --primary-dark: #a68549;
-            --bg: #050505; 
-            --card: #111111;
-            --input-bg: #1a1a1a; 
-            --text: #ffffff; 
-            --text-dim: #a0a0a0;
-            --danger: #ff4d4d; 
-            --success: #00ff88; 
-            --blue-action: #0095ff;
-            --grad: linear-gradient(135deg, #c5a059 0%, #a68549 100%);
+            --primary: #c5a059; --primary-dark: #a68549; --bg: #050505; 
+            --card: #111111; --input-bg: #1a1a1a; --text: #ffffff; 
+            --text-dim: #a0a0a0; --danger: #ff4d4d; --success: #00ff88; 
+            --blue-action: #0095ff; --grad: linear-gradient(135deg, #c5a059 0%, #a68549 100%);
         }
-
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; margin: 0; padding: 0; }
         body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); line-height: 1.4; overflow-x: hidden; padding-bottom: 50px; }
-
         #modal-login { position: fixed; inset: 0; background: radial-gradient(circle at center, #1a1a1a 0%, #050505 100%); display: flex; align-items: center; justify-content: center; z-index: 9999; }
         .login-box { width: 85%; max-width: 340px; text-align: center; padding: 40px 25px; background: var(--card); border-radius: 30px; border: 1px solid #222; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
-
         .top-nav-container { padding: 30px 15px; text-align: center; background: linear-gradient(to bottom, #111, transparent); }
         .logo-main { font-size: 1.6rem; font-weight: 900; letter-spacing: 5px; color: var(--primary); margin-bottom: 25px; }
         .tab-bar { background: #161616; padding: 5px; border-radius: 20px; display: flex; max-width: 550px; margin: 0 auto; border: 1px solid #222; }
         .tab-btn { padding: 12px 5px; border-radius: 15px; color: var(--text-dim); font-size: 0.7rem; font-weight: 600; cursor: pointer; flex: 1; text-align: center; transition: 0.3s; }
         .tab-btn.active { background: #222; color: var(--primary); }
         .tab-btn.premium-active { background: var(--grad); color: #000; font-weight: 800; }
-
         .content { padding: 20px 15px; max-width: 500px; margin: auto; animation: fadeIn 0.5s ease; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .card { background: var(--card); border-radius: 24px; padding: 22px; margin-bottom: 18px; border: 1px solid #252525; }
-        
         label { display: block; font-size: 0.65rem; font-weight: 700; color: var(--primary); margin: 0 0 8px 10px; text-transform: uppercase; }
         input, select, textarea { width: 100%; padding: 16px; background: var(--input-bg); border: 1px solid #282828; border-radius: 16px; color: #fff; margin-bottom: 18px; font-size: 0.9rem; }
-        .btn-action { width: 100%; padding: 18px; border-radius: 16px; border: none; background: var(--grad); color: #000; font-weight: 900; text-transform: uppercase; cursor: pointer; text-decoration: none; display: block; text-align: center; }
-        
+        input:disabled { opacity: 0.5; border: 1px dashed #444; }
+        .btn-action { width: 100%; padding: 18px; border-radius: 16px; border: none; background: var(--grad); color: #000; font-weight: 900; text-transform: uppercase; cursor: pointer; display: block; text-align: center; }
         .client-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
         .client-name { font-size: 1.1rem; font-weight: 800; color: #fff; text-transform: uppercase; }
         .badge-time { background: var(--grad); color: #000; padding: 5px 10px; border-radius: 8px; font-size: 0.75rem; font-weight: 900; }
         .agenda-info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding-top: 15px; border-top: 1px solid #222; margin-top: 10px; }
         .label-mini { font-size: 0.6rem; font-weight: 800; color: var(--primary); text-transform: uppercase; display: block; margin-bottom: 2px; }
         .val-highlight { font-size: 0.85rem; font-weight: 600; color: #fff; }
-        
         .item-list { display: flex; justify-content: space-between; align-items: center; padding: 15px; background: #181818; border-radius: 15px; margin-bottom: 10px; border: 1px solid #222; }
         .btn-edit { color: var(--blue-action); font-size: 0.7rem; font-weight: 800; background: none; border: none; cursor: pointer; text-transform: uppercase; margin-right: 10px; }
         .btn-del { color: var(--danger); font-size: 0.7rem; font-weight: 800; background: none; border: none; cursor: pointer; text-transform: uppercase; }
+        .sub-box { background: #000; padding: 15px; border-radius: 15px; margin-bottom: 15px; border: 1px solid #222; }
     </style>
 </head>
 <body>
@@ -98,7 +86,16 @@
                 <label>Nome do Barbeiro</label>
                 <input id="b-nome" placeholder="Ex: Lucas">
                 <label>Serviços e Preços</label>
-                <textarea id="b-servs" rows="4" placeholder="Corte - R$ 35&#10;Barba - R$ 25"></textarea>
+                <textarea id="b-servs" rows="3" placeholder="Corte - R$ 35&#10;Barba - R$ 25"></textarea>
+
+                <div class="sub-box">
+                    <p style="font-size: 0.6rem; color: var(--primary); font-weight: 800; margin-bottom: 10px;">NOTIFICAÇÃO DIRETA (OPCIONAL)</p>
+                    <label style="margin-left:0">Token do Bot dele</label>
+                    <input id="b-token" placeholder="Token Individual">
+                    <label style="margin-left:0">Chat ID dele</label>
+                    <input id="b-chatid" placeholder="ID do Telegram dele">
+                </div>
+
                 <button id="btn-salvar-barbeiro" class="btn-action" onclick="salvarBarbeiro()">Adicionar Barbeiro</button>
                 <button id="btn-cancelar-edit" style="display:none; background:none; color:gray; border:none; width:100%; margin-top:10px; font-size:0.7rem; font-weight:bold; cursor:pointer;" onclick="limparFormBarbeiro()">CANCELAR EDIÇÃO</button>
             </div>
@@ -132,23 +129,18 @@
 
         <div id="tab-premium" class="tab-content" style="display: none;">
             <div class="card" style="text-align: center; padding: 25px 15px;">
-                <div style="font-size: 2.5rem; margin-bottom: 15px;">🏆</div>
-                <h2 style="color:var(--primary); margin-bottom:10px;">Plano Premium</h2>
-                <p id="txt-restam" style="color:var(--text-dim); margin-bottom:20px; font-size: 0.9rem;">Verificando assinatura...</p>
-                <a href="https://mpago.la/1bCHsKA" target="_blank" class="btn-action" style="background:var(--blue-action); color:#fff; text-decoration:none; padding: 15px;">Renovar Agora</a>
+                <h2 style="color:var(--primary); margin-bottom:10px;">Status da Assinatura</h2>
+                <p id="txt-restam" style="color:var(--text-dim); margin-bottom:20px; font-size: 0.9rem;">Verificando...</p>
+                <a href="https://mpago.la/1bCHsKA" target="_blank" class="btn-action" style="background:var(--blue-action); color:#fff; text-decoration:none;">Renovar Plano</a>
             </div>
 
             <div class="card">
-                <h3 style="font-size: 0.75rem; color: var(--primary); margin-bottom: 20px; text-transform: uppercase; letter-spacing: 1px;">⚙️ Configuração de Notificações</h3>
-                
-                <label>Token do Bot (Telegram)</label>
-                <input type="text" id="conf-telegram-token" placeholder="Cole o Token do @BotFather aqui">
-                
-                <label>Seu Chat ID (Telegram)</label>
-                <input type="text" id="conf-telegram-chatid" placeholder="Cole seu ID do @userinfobot aqui">
-                
-                <button class="btn-action" style="background: #222; color: var(--primary); border: 1px solid #444;" onclick="salvarConfiguracoesBot()">Salvar Configurações</button>
-                <p style="font-size: 0.6rem; color: gray; margin-top: 15px; text-align: center; text-transform: uppercase;">Esses dados são usados para enviar avisos de novos agendamentos.</p>
+                <h3 style="font-size: 0.75rem; color: var(--primary); margin-bottom: 20px;">⚙️ CONFIGURAÇÃO GERAL</h3>
+                <label>Token Bot Principal</label>
+                <input type="text" id="conf-telegram-token" placeholder="Bot da Barbearia">
+                <label>Chat ID Principal (Dono)</label>
+                <input type="text" id="conf-telegram-chatid" placeholder="Seu ID ou do Grupo">
+                <button class="btn-action" id="btn-bot-geral" style="background: #222; color: var(--primary); border: 1px solid #444;" onclick="salvarConfigBotGeral()">Salvar Configurações</button>
             </div>
         </div>
     </div>
@@ -172,8 +164,6 @@
         if(document.getElementById('senha-login').value === "4321") {
             document.getElementById('modal-login').style.display = 'none';
             document.getElementById('main-app').style.display = 'block';
-            const hoje = new Date().toISOString().split('T')[0];
-            document.getElementById('f-data').setAttribute('min', hoje);
             init();
         } else alert("Senha incorreta!");
     }
@@ -183,190 +173,103 @@
         carregarAgenda();
         carregarFolgas();
         verificarAssinatura(); 
-        carregarDadosBot(); // Carrega o Token e ChatID salvos
+        carregarDadosBotGeral();
     }
 
-    // --- NOVA FUNÇÃO: CARREGAR DADOS DO BOT ---
-    // --- FUNÇÃO CARREGAR DADOS DO BOT (COM MÁSCARA) ---
-    async function carregarDadosBot() {
+    // --- LÓGICA DO BOT GERAL (ABA PLANO) ---
+    async function carregarDadosBotGeral() {
         const doc = await db.collection("configuracao").doc("telegram").get();
         if(doc.exists) {
-            const campoToken = document.getElementById('conf-telegram-token');
-            const campoChatId = document.getElementById('conf-telegram-chatid');
-            
-            // Define o valor e bloqueia os campos
-            campoToken.value = "********"; 
-            campoChatId.value = "********";
-            campoToken.disabled = true;
-            campoChatId.disabled = true;
-
-            // Altera o botão para modo "Editar" se já houver dados
-            const btn = document.querySelector("button[onclick='salvarConfiguracoesBot()']");
+            document.getElementById('conf-telegram-token').value = "********";
+            document.getElementById('conf-telegram-chatid').value = "********";
+            document.getElementById('conf-telegram-token').disabled = true;
+            document.getElementById('conf-telegram-chatid').disabled = true;
+            const btn = document.getElementById('btn-bot-geral');
             btn.innerText = "Editar Configurações";
-            btn.setAttribute("onclick", "liberarEdicaoBot(this)");
+            btn.setAttribute("onclick", "liberarEdicaoBotGeral()");
         }
     }
 
-    // --- FUNÇÃO PARA LIBERAR OS CAMPOS ---
-    function liberarEdicaoBot(btn) {
-        const campoToken = document.getElementById('conf-telegram-token');
-        const campoChatId = document.getElementById('conf-telegram-chatid');
-        
-        campoToken.value = "";
-        campoChatId.value = "";
-        campoToken.disabled = false;
-        campoChatId.disabled = false;
-        campoToken.placeholder = "Digite o novo Token";
-        campoChatId.placeholder = "Digite o novo Chat ID";
-        
-        btn.innerText = "Salvar Configurações";
-        btn.setAttribute("onclick", "salvarConfiguracoesBot()");
+    function liberarEdicaoBotGeral() {
+        document.getElementById('conf-telegram-token').value = "";
+        document.getElementById('conf-telegram-chatid').value = "";
+        document.getElementById('conf-telegram-token').disabled = false;
+        document.getElementById('conf-telegram-chatid').disabled = false;
+        const btn = document.getElementById('btn-bot-geral');
+        btn.innerText = "Salvar Agora";
+        btn.setAttribute("onclick", "salvarConfigBotGeral()");
     }
 
-    // --- FUNÇÃO SALVAR DADOS DO BOT (BLOQUEIA APÓS SALVAR) ---
-    async function salvarConfiguracoesBot() {
-        const token = document.getElementById('conf-telegram-token').value;
-        const chatId = document.getElementById('conf-telegram-chatid').value;
-        
-        if(!token || !chatId || token === "********") return alert("Insira dados válidos!");
-        
-        await db.collection("configuracao").doc("telegram").set({
-            token: token,
-            chatId: chatId,
-            atualizadoEm: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        
-        alert("Configurações de notificação salvas!");
-        carregarDadosBot(); // Bloqueia e esconde os dados novamente
+    async function salvarConfigBotGeral() {
+        const t = document.getElementById('conf-telegram-token').value;
+        const c = document.getElementById('conf-telegram-chatid').value;
+        if(!t || !c || t === "********") return alert("Dados inválidos");
+        await db.collection("configuracao").doc("telegram").set({ token: t.trim(), chatId: c.trim() });
+        alert("Configuração Geral Salva!");
+        carregarDadosBotGeral();
     }
 
-    // --- NOVA FUNÇÃO: SALVAR DADOS DO BOT ---
-    async function salvarConfiguracoesBot() {
-        const token = document.getElementById('conf-telegram-token').value;
-        const chatId = document.getElementById('conf-telegram-chatid').value;
-        
-        await db.collection("configuracao").doc("telegram").set({
-            token: token,
-            chatId: chatId,
-            atualizadoEm: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        alert("Configurações de notificação salvas!");
-    }
-
-    async function verificarAssinatura() {
-        const docRef = db.collection("configuracao").doc("assinatura");
-        const doc = await docRef.get();
-        let dataLimite;
-        let dataInstalacao;
-
-        if(!doc.exists) {
-            const hoje = new Date();
-            dataInstalacao = hoje;
-            dataLimite = new Date();
-            dataLimite.setDate(hoje.getDate() + 30);
-            await docRef.set({
-                dataInstalacao: firebase.firestore.Timestamp.fromDate(hoje),
-                premiumAte: null,
-                status: "Ativo"
-            });
-        } else {
-            const dados = doc.data();
-            dataInstalacao = dados.dataInstalacao.toDate();
-            if (dados.premiumAte) {
-                dataLimite = dados.premiumAte.toDate();
-            } else {
-                dataLimite = new Date(dataInstalacao);
-                dataLimite.setDate(dataInstalacao.getDate() + 30);
-            }
-        }
-
-        const hoje = new Date();
-        const resta = Math.ceil((dataLimite - hoje) / (1000 * 60 * 60 * 24));
-        const statusAtual = doc.exists ? (doc.data().status || "Ativo") : "Ativo";
-        const vencimentoFormatado = dataLimite.toLocaleDateString('pt-BR');
-
-        if (resta <= 0) {
-            document.body.innerHTML = `
-                <div style="height:100vh; background:#050505; color:white; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; font-family:'Inter', sans-serif; padding:30px;">
-                    <div style="font-size: 5rem; margin-bottom: 20px;">🔒</div>
-                    <h1 style="color:var(--primary); font-weight:900; letter-spacing:2px;">ASSINATURA EXPIRADA</h1>
-                    <p style="color:#a0a0a0; max-width:350px; margin: 15px 0 30px 0; line-height:1.6;">Seu período de uso expirou em ${vencimentoFormatado}.</p>
-                    <a href="https://mpago.la/1bCHsKA" target="_blank" style="background:var(--grad); color:black; padding:20px 40px; border-radius:15px; text-decoration:none; font-weight:900; width:100%; max-width:300px;">RENOVAR AGORA</a>
-                </div>`;
-            return false;
-        } else {
-            document.getElementById('txt-restam').innerHTML = `
-                <span style="color:var(--success); font-weight:800; display:block; margin-bottom:5px; font-size:1.1rem;">STATUS: ${statusAtual.toUpperCase()}</span>
-                <span style="color:var(--text-dim); display:block; margin-bottom:10px;">Vencimento: ${vencimentoFormatado}</span>
-                Liberação por mais ${resta} dias.`;
-            return true;
-        }
-    }
-
+    // --- RESTANTE DAS FUNÇÕES ---
     async function carregarEquipe() {
         db.collection("barbeiros").onSnapshot(snap => {
             barbeirosLocal = snap.docs.map(doc => ({id: doc.id, ...doc.data()}));
-            const selectFolga = document.getElementById('f-barbeiro');
-            const selectFiltro = document.getElementById('filtro-barbeiro-agenda');
-            const renderEquipe = document.getElementById('render-equipe');
-            selectFolga.innerHTML = '<option value="">Escolha...</option>';
-            selectFiltro.innerHTML = '<option value="todos">📅 Mostrar Todos</option>';
-            renderEquipe.innerHTML = "";
+            const selF = document.getElementById('f-barbeiro');
+            const selA = document.getElementById('filtro-barbeiro-agenda');
+            const render = document.getElementById('render-equipe');
+            selF.innerHTML = '<option value="">Escolha...</option>';
+            selA.innerHTML = '<option value="todos">📅 Mostrar Todos</option>';
+            render.innerHTML = "";
             barbeirosLocal.forEach(b => {
-                selectFolga.innerHTML += `<option value="${b.id}">${b.nome}</option>`;
-                selectFiltro.innerHTML += `<option value="${b.id}">${b.nome}</option>`;
-                renderEquipe.innerHTML += `<div class="item-list"><div style="flex:1"><b>${b.nome}</b></div><button class="btn-edit" onclick="prepararEdicao('${b.id}')">Editar</button><button class="btn-del" onclick="excluir('barbeiros', '${b.id}')">Remover</button></div>`;
+                selF.innerHTML += `<option value="${b.id}">${b.nome}</option>`;
+                selA.innerHTML += `<option value="${b.id}">${b.nome}</option>`;
+                render.innerHTML += `<div class="item-list"><b>${b.nome}</b><div><button class="btn-edit" onclick="prepararEdicao('${b.id}')">Editar</button><button class="btn-del" onclick="excluir('barbeiros','${b.id}')">Excluir</button></div></div>`;
             });
         });
     }
 
     async function salvarBarbeiro() {
-        const ativo = await verificarAssinatura();
-        if(!ativo) return;
         const id = document.getElementById('edit-id').value;
         const nome = document.getElementById('b-nome').value;
         const servs = document.getElementById('b-servs').value;
-        if(!nome) return alert("Digite o nome");
-        const dados = { nome, servicos: servs };
+        const token = document.getElementById('b-token').value;
+        const chatid = document.getElementById('b-chatid').value;
+        if(!nome) return alert("Nome obrigatório");
+        
+        const dados = { nome, servicos: servs, telToken: token.trim(), telChatId: chatid.trim() };
         if(id) await db.collection("barbeiros").doc(id).update(dados);
         else await db.collection("barbeiros").add(dados);
+        
         limparFormBarbeiro();
-        alert("Sucesso!");
+        alert("Barbeiro Atualizado!");
     }
 
     function carregarAgenda() {
-        const filtroId = document.getElementById('filtro-barbeiro-agenda').value;
+        const filtro = document.getElementById('filtro-barbeiro-agenda').value;
         let query = db.collection("agenda").orderBy("data", "asc");
-        if (filtroId !== "todos") query = query.where("barbeiroId", "==", filtroId);
+        if (filtro !== "todos") query = query.where("barbeiroId", "==", filtro);
         query.onSnapshot(snap => {
             const container = document.getElementById('render-agenda');
-            container.innerHTML = snap.empty ? '<p style="text-align:center; padding:50px; color:gray;">Nenhum agendamento.</p>' : "";
+            container.innerHTML = snap.empty ? '<p style="text-align:center; color:gray">Sem horários.</p>' : "";
             snap.docs.forEach(doc => {
                 const ag = doc.data();
-                container.innerHTML += `<div class="card"><div class="client-header"><div><span class="label-mini">${ag.data.split('-').reverse().join('/')}</span><h2 class="client-name">${ag.cliente}</h2></div><div class="badge-time">${ag.hora}</div></div><div class="agenda-info-grid"><div><span class="label-mini">Barbeiro</span><span class="val-highlight">${ag.barbeiroNome}</span></div><div><span class="label-mini">Serviço</span><span class="val-highlight" style="color:var(--primary)">${ag.servico}</span></div></div><div style="margin-top:15px; padding-top:12px; border-top:1px solid #222; display:flex; justify-content:space-between;"><a href="https://wa.me/55${ag.clienteWhatsapp?.replace(/\D/g,'')}" target="_blank" style="color:var(--success); text-decoration:none; font-size:0.7rem; font-weight:800;">📲 WHATSAPP</a><button class="btn-del" onclick="excluir('agenda', '${doc.id}')">Concluir</button></div></div>`;
+                container.innerHTML += `<div class="card"><div class="client-header"><div><span class="label-mini">${ag.data}</span><h2 class="client-name">${ag.cliente}</h2></div><div class="badge-time">${ag.hora}</div></div><div class="agenda-info-grid"><div><span class="label-mini">Barbeiro</span><span class="val-highlight">${ag.barbeiroNome}</span></div><div><span class="label-mini">Serviço</span><span class="val-highlight" style="color:var(--primary)">${ag.servico}</span></div></div><div style="margin-top:15px; display:flex; justify-content:space-between;"><a href="https://wa.me/55${ag.clienteWhatsapp}" target="_blank" style="color:var(--success); font-size:0.7rem; font-weight:800; text-decoration:none">WHATSAPP</a><button class="btn-del" onclick="excluir('agenda','${doc.id}')">Concluir</button></div></div>`;
             });
         });
     }
 
     async function salvarFolga() {  
-        const bId = document.getElementById('f-barbeiro').value;
-        const data = document.getElementById('f-data').value;
-        const tipo = document.getElementById('f-tipo').value;
-        const hora = document.getElementById('f-hora-select').value;
-        if(!bId || !data) return alert("Preencha tudo");
-        await db.collection("bloqueios").add({ barbeiroId: bId, data: data, hora: (tipo === "HORA_UNICA") ? hora : "DIA_TODO" });
+        const b = document.getElementById('f-barbeiro').value;
+        const d = document.getElementById('f-data').value;
+        if(!b || !d) return alert("Preencha tudo");
+        await db.collection("bloqueios").add({ barbeiroId: b, data: d, hora: document.getElementById('f-tipo').value === 'HORA_UNICA' ? document.getElementById('f-hora-select').value : 'DIA_TODO' });
         alert("Bloqueado!");
     }
 
     function carregarFolgas() { 
-        db.collection("bloqueios").orderBy("data", "desc").limit(10).onSnapshot(snap => {   
+        db.collection("bloqueios").orderBy("data", "desc").limit(5).onSnapshot(snap => {   
             const render = document.getElementById('render-folgas'); 
-            render.innerHTML = snap.empty ? "" : '<p style="margin:20px 0 10px; font-size:0.6rem; color:gray;">BLOQUEIOS RECENTES</p>';
-            snap.docs.forEach(doc => {
-                const f = doc.data();
-                const b = barbeirosLocal.find(x => x.id === f.barbeiroId);
-                render.innerHTML += `<div class="item-list" style="font-size:0.8rem"><span>${b?.nome} - ${f.data}</span><button class="btn-del" onclick="excluir('bloqueios', '${doc.id}')">Remover</button></div>`;
-            });
+            render.innerHTML = snap.empty ? "" : '<p style="font-size:0.6rem; color:gray; margin:10px 0">BLOQUEIOS RECENTES</p>';
+            snap.docs.forEach(doc => render.innerHTML += `<div class="item-list" style="font-size:0.8rem"><span>${doc.data().data}</span><button class="btn-del" onclick="excluir('bloqueios','${doc.id}')">Remover</button></div>`);
         });
     }
 
@@ -374,37 +277,35 @@
         document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
         document.getElementById('tab-'+tab).style.display = 'block';
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active', 'premium-active'));
-        if(tab === 'premium') el.classList.add('premium-active'); else el.classList.add('active');
+        el.classList.add(tab === 'premium' ? 'premium-active' : 'active');
     }
 
-    function toggleHoraInput() {
-        const tipo = document.getElementById('f-tipo').value;
-        document.getElementById('box-hora-especifica').style.display = tipo === 'HORA_UNICA' ? 'block' : 'none';
-    }
+    function toggleHoraInput() { document.getElementById('box-hora-especifica').style.display = document.getElementById('f-tipo').value === 'HORA_UNICA' ? 'block' : 'none'; }
 
     function prepararEdicao(id) {
         const b = barbeirosLocal.find(x => x.id === id);
         document.getElementById('edit-id').value = b.id;
         document.getElementById('b-nome').value = b.nome;
         document.getElementById('b-servs').value = b.servicos || "";
-        document.getElementById('titulo-editor-barbeiro').innerText = "EDITANDO: " + b.nome.toUpperCase();
-        document.getElementById('btn-salvar-barbeiro').innerText = "Atualizar";
+        document.getElementById('b-token').value = b.telToken || "";
+        document.getElementById('b-chatid').value = b.telChatId || "";
+        document.getElementById('btn-salvar-barbeiro').innerText = "Salvar Alterações";
         document.getElementById('btn-cancelar-edit').style.display = "block";
     }
 
     function limparFormBarbeiro() {
-        document.getElementById('edit-id').value = "";
-        document.getElementById('b-nome').value = "";
-        document.getElementById('b-servs').value = "";
-        document.getElementById('titulo-editor-barbeiro').innerText = "CADASTRAR NOVO BARBEIRO";
-        document.getElementById('btn-salvar-barbeiro').innerText = "Adicionar Barbeiro";
+        document.getElementById('edit-id').value = ""; document.getElementById('b-nome').value = "";
+        document.getElementById('b-servs').value = ""; document.getElementById('b-token').value = "";
+        document.getElementById('b-chatid').value = ""; document.getElementById('btn-salvar-barbeiro').innerText = "Adicionar Barbeiro";
         document.getElementById('btn-cancelar-edit').style.display = "none";
     }
 
-    async function excluir(col, id) { 
-        if(confirm("Deseja realmente excluir/concluir?")) await db.collection(col).doc(id).delete(); 
+    async function verificarAssinatura() {
+        const doc = await db.collection("configuracao").doc("assinatura").get();
+        document.getElementById('txt-restam').innerText = doc.exists ? "Plano Ativo" : "Período de Teste";
     }
-</script>
 
+    async function excluir(col, id) { if(confirm("Confirmar?")) await db.collection(col).doc(id).delete(); }
+</script>
 </body>
 </html>
