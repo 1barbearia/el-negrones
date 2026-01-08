@@ -131,19 +131,30 @@
         </div>
 
         <div id="tab-premium" class="tab-content" style="display: none;">
-            <div class="card" style="text-align: center; padding: 40px 15px;">
-                <div style="font-size: 3rem; margin-bottom: 20px;">🏆</div>
+            <div class="card" style="text-align: center; padding: 25px 15px;">
+                <div style="font-size: 2.5rem; margin-bottom: 15px;">🏆</div>
                 <h2 style="color:var(--primary); margin-bottom:10px;">Plano Premium</h2>
-                <p id="txt-restam" style="color:var(--text-dim); margin-bottom:25px;">Verificando assinatura...</p>
-                <a href="https://mpago.la/1bCHsKA" target="_blank" class="btn-action" style="background:var(--blue-action); color:#fff; text-decoration:none;">Renovar Agora</a>
-                <p style="font-size: 0.6rem; color: gray; margin-top: 15px; text-transform: uppercase;">A liberação ocorre após a confirmação do pagamento.</p>
+                <p id="txt-restam" style="color:var(--text-dim); margin-bottom:20px; font-size: 0.9rem;">Verificando assinatura...</p>
+                <a href="https://mpago.la/1bCHsKA" target="_blank" class="btn-action" style="background:var(--blue-action); color:#fff; text-decoration:none; padding: 15px;">Renovar Agora</a>
+            </div>
+
+            <div class="card">
+                <h3 style="font-size: 0.75rem; color: var(--primary); margin-bottom: 20px; text-transform: uppercase; letter-spacing: 1px;">⚙️ Configuração de Notificações</h3>
+                
+                <label>Token do Bot (Telegram)</label>
+                <input type="text" id="conf-telegram-token" placeholder="Cole o Token do @BotFather aqui">
+                
+                <label>Seu Chat ID (Telegram)</label>
+                <input type="text" id="conf-telegram-chatid" placeholder="Cole seu ID do @userinfobot aqui">
+                
+                <button class="btn-action" style="background: #222; color: var(--primary); border: 1px solid #444;" onclick="salvarConfiguracoesBot()">Salvar Configurações</button>
+                <p style="font-size: 0.6rem; color: gray; margin-top: 15px; text-align: center; text-transform: uppercase;">Esses dados são usados para enviar avisos de novos agendamentos.</p>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-    // CONFIGURAÇÃO DO FIREBASE
     const firebaseConfig = { 
         apiKey: "AIzaSyC0x8q1N7R70BYhfd2daedBjRKH0qupJiI",
         authDomain: "elnes-720ce.firebaseapp.com",
@@ -172,9 +183,31 @@
         carregarAgenda();
         carregarFolgas();
         verificarAssinatura(); 
+        carregarDadosBot(); // Carrega o Token e ChatID salvos
     }
 
-    // --- LÓGICA DE ASSINATURA: 30 DIAS GRÁTIS VIA DATAINSTALACAO ---
+    // --- NOVA FUNÇÃO: CARREGAR DADOS DO BOT ---
+    async function carregarDadosBot() {
+        const doc = await db.collection("configuracao").doc("telegram").get();
+        if(doc.exists) {
+            document.getElementById('conf-telegram-token').value = doc.data().token || "";
+            document.getElementById('conf-telegram-chatid').value = doc.data().chatId || "";
+        }
+    }
+
+    // --- NOVA FUNÇÃO: SALVAR DADOS DO BOT ---
+    async function salvarConfiguracoesBot() {
+        const token = document.getElementById('conf-telegram-token').value;
+        const chatId = document.getElementById('conf-telegram-chatid').value;
+        
+        await db.collection("configuracao").doc("telegram").set({
+            token: token,
+            chatId: chatId,
+            atualizadoEm: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        alert("Configurações de notificação salvas!");
+    }
+
     async function verificarAssinatura() {
         const docRef = db.collection("configuracao").doc("assinatura");
         const doc = await docRef.get();
@@ -182,23 +215,18 @@
         let dataInstalacao;
 
         if(!doc.exists) {
-            // Se o documento não existir no Firebase, cria com premiumAte: null
             const hoje = new Date();
             dataInstalacao = hoje;
             dataLimite = new Date();
-            dataLimite.setDate(hoje.getDate() + 30); // Prazo de 30 dias
-
+            dataLimite.setDate(hoje.getDate() + 30);
             await docRef.set({
                 dataInstalacao: firebase.firestore.Timestamp.fromDate(hoje),
-                premiumAte: null, // Mantém null conforme solicitado
+                premiumAte: null,
                 status: "Ativo"
             });
         } else {
             const dados = doc.data();
             dataInstalacao = dados.dataInstalacao.toDate();
-
-            // LÓGICA: Se 'premiumAte' for preenchido (não null), usa ele.
-            // Se 'premiumAte' for null, usa dataInstalacao + 30 dias.
             if (dados.premiumAte) {
                 dataLimite = dados.premiumAte.toDate();
             } else {
@@ -217,22 +245,15 @@
                 <div style="height:100vh; background:#050505; color:white; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; font-family:'Inter', sans-serif; padding:30px;">
                     <div style="font-size: 5rem; margin-bottom: 20px;">🔒</div>
                     <h1 style="color:var(--primary); font-weight:900; letter-spacing:2px;">ASSINATURA EXPIRADA</h1>
-                    <p style="color:#a0a0a0; max-width:350px; margin: 15px 0 30px 0; line-height:1.6;">
-                        Seu período de uso expirou em ${vencimentoFormatado}. Realize a renovação para continuar.
-                    </p>
-                    <a href="https://mpago.la/1bCHsKA" target="_blank" 
-                       style="background:linear-gradient(135deg, #c5a059 0%, #a68549 100%); color:black; padding:20px 40px; border-radius:15px; text-decoration:none; font-weight:900; width:100%; max-width:300px;">
-                       RENOVAR AGORA
-                    </a>
-                </div>
-            `;
+                    <p style="color:#a0a0a0; max-width:350px; margin: 15px 0 30px 0; line-height:1.6;">Seu período de uso expirou em ${vencimentoFormatado}.</p>
+                    <a href="https://mpago.la/1bCHsKA" target="_blank" style="background:var(--grad); color:black; padding:20px 40px; border-radius:15px; text-decoration:none; font-weight:900; width:100%; max-width:300px;">RENOVAR AGORA</a>
+                </div>`;
             return false;
         } else {
             document.getElementById('txt-restam').innerHTML = `
-                <span style="color:var(--success); font-weight:800; display:block; margin-bottom:5px; font-size:1.2rem;">STATUS: ${statusAtual.toUpperCase()}</span>
-                <span style="color:var(--text-dim); display:block; margin-bottom:15px;">Vencimento: ${vencimentoFormatado}</span>
-                Seu acesso está liberado por mais ${resta} dias.
-            `;
+                <span style="color:var(--success); font-weight:800; display:block; margin-bottom:5px; font-size:1.1rem;">STATUS: ${statusAtual.toUpperCase()}</span>
+                <span style="color:var(--text-dim); display:block; margin-bottom:10px;">Vencimento: ${vencimentoFormatado}</span>
+                Liberação por mais ${resta} dias.`;
             return true;
         }
     }
