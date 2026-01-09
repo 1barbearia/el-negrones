@@ -61,6 +61,7 @@
 </div>
 
 <script>
+    // --- CONFIGURAÇÃO FIREBASE ---
     const firebaseConfig = { 
         apiKey: "AIzaSyC0x8q1N7R70BYhfd2daedBjRKH0qupJiI", 
         authDomain: "elnes-720ce.firebaseapp.com", 
@@ -72,12 +73,14 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     
+    // --- VARIÁVEIS GLOBAIS ---
     let barbeirosData = [];
     let horarioSelecionado = null;
     let sistemaAtivo = true;
     let botTokenGlobal = "";
     const horasBase = ["09:00","09:30","10:00","10:30","11:00","11:30","12:00","12:30","13:00","13:30","14:00","14:30","15:00","15:30","16:00","16:30","17:00","17:30","18:00","18:30","19:00","19:30"];
 
+    // --- INICIALIZAÇÃO ---
     window.onload = async () => {
         await verificarAssinatura();
         if(!sistemaAtivo) return;
@@ -89,16 +92,18 @@
     };
 
     async function verificarAssinatura() {
-        const doc = await db.collection("configuracao").doc("assinatura").get();
-        if(doc.exists) {
-            const data = doc.data();
-            let expira = data.premiumAte ? data.premiumAte.toDate() : new Date(data.dataInstalacao.toDate().getTime() + 30 * 24 * 60 * 60 * 1000);
-            if (new Date() > expira) {
-                sistemaAtivo = false;
-                document.getElementById('bloqueio-total').style.display = 'flex';
-                document.getElementById('app-content').style.display = 'none';
+        try {
+            const doc = await db.collection("configuracao").doc("assinatura").get();
+            if(doc.exists) {
+                const data = doc.data();
+                let expira = data.premiumAte ? data.premiumAte.toDate() : new Date(data.dataInstalacao.toDate().getTime() + 30 * 24 * 60 * 60 * 1000);
+                if (new Date() > expira) {
+                    sistemaAtivo = false;
+                    document.getElementById('bloqueio-total').style.display = 'flex';
+                    document.getElementById('app-content').style.display = 'none';
+                }
             }
-        }
+        } catch(e) { console.error("Erro assinatura:", e); }
     }
 
     async function carregarTokenBot() {
@@ -161,20 +166,20 @@
         const nome = document.getElementById("nome-cliente").value;
         const whatsapp = document.getElementById("whatsapp-cliente").value;
         const bId = document.getElementById("select-barbeiro").value;
-        
-        const bAlvo = barbeirosData.find(x => x.id === bId);
-        const bNome = bAlvo ? bAlvo.nome : "";
-        const chatIdB = bAlvo ? bAlvo.chatId : null;
-
         const data = document.getElementById("data-agenda").value;
         const serv = document.getElementById("select-servico").value;
 
         if(!nome || !horarioSelecionado || !bId || !serv) return alert("Preencha todos os campos!");
 
+        const bAlvo = barbeirosData.find(x => x.id === bId);
+        const bNome = bAlvo ? bAlvo.nome : "";
+        const chatIdB = bAlvo ? bAlvo.chatId : null;
+
         btn.disabled = true;
         btn.innerText = "PROCESSANDO...";
 
         try {
+            // 1. Salva no Firebase
             await db.collection("agenda").add({ 
                 cliente: nome, 
                 clienteWhatsapp: whatsapp, 
@@ -186,15 +191,36 @@
                 criadoEm: firebase.firestore.FieldValue.serverTimestamp() 
             });
             
+            // 2. Envia para o Telegram (se houver token e chat id)
             if(botTokenGlobal && chatIdB) {
-                const msg = `🚀 *NOVO AGENDAMENTO*\n\n👤 *Cliente:* ${nome}\n📱 *Whats:* ${whatsapp || 'Não informado'}\n📅 *Data:* ${data.split('-').reverse().join('/')}\n⏰ *Hora:* ${horarioSelecionado}\n✂️ *Serviço:* ${serv}\n💈 *Barbeiro:* ${bNome}`;
-                const url = `https://api.telegram.org/bot${botTokenGlobal}/sendMessage?chat_id=${chatIdB}&text=${encodeURIComponent(msg)}&parse_mode=Markdown`;
-                fetch(url).catch(e => console.log("Erro bot"));
+                const dataFormatada = data.split('-').reverse().join('/');
+                const mensagemTelegram = `🚀 *NOVO AGENDAMENTO*\n\n` +
+                                       `👤 *Cliente:* ${nome}\n` +
+                                       `📱 *Whats:* ${whatsapp || 'Não informado'}\n` +
+                                       `📅 *Data:* ${dataFormatada}\n` +
+                                       `⏰ *Hora:* ${horarioSelecionado}\n` +
+                                       `✂️ *Serviço:* ${serv}\n` +
+                                       `💈 *Barbeiro:* ${bNome}`;
+
+                await fetch(`https://api.telegram.org/bot${botTokenGlobal}/sendMessage`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        chat_id: chatIdB,
+                        text: mensagemTelegram,
+                        parse_mode: 'Markdown'
+                    })
+                }).catch(err => console.error("Erro ao enviar Telegram:", err));
             }
 
             alert("Reserva confirmada com sucesso!");
             location.reload();
-        } catch (e) { alert("Erro ao agendar."); btn.disabled = false; btn.innerText = "Confirmar Reserva"; }
+        } catch (e) { 
+            console.error(e);
+            alert("Erro ao agendar. Verifique sua conexão."); 
+            btn.disabled = false; 
+            btn.innerText = "Confirmar Reserva"; 
+        }
     }
 </script>
 </body>
