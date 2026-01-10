@@ -31,12 +31,70 @@
         #modal-login { position: fixed; inset: 0; background: radial-gradient(circle at center, #1a1a1a 0%, #050505 100%); display: flex; align-items: center; justify-content: center; z-index: 9999; }
         .login-box { width: 85%; max-width: 340px; text-align: center; padding: 40px 25px; background: var(--card); border-radius: 30px; border: 1px solid #222; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
 
-        .top-nav-container { padding: 30px 15px; text-align: center; background: linear-gradient(to bottom, #111, transparent); }
-        .logo-main { font-size: 1.6rem; font-weight: 900; letter-spacing: 5px; color: var(--primary); margin-bottom: 25px; }
-        .tab-bar { background: #161616; padding: 5px; border-radius: 20px; display: flex; max-width: 550px; margin: 0 auto; border: 1px solid #222; }
-        .tab-btn { padding: 12px 5px; border-radius: 15px; color: var(--text-dim); font-size: 0.7rem; font-weight: 600; cursor: pointer; flex: 1; text-align: center; transition: 0.3s; }
-        .tab-btn.active { background: #222; color: var(--primary); }
-        .tab-btn.premium-active { background: var(--grad); color: #000; font-weight: 800; }
+        /* --- MENU REESTILIZADO --- */
+.top-nav-container { 
+    padding: 25px 15px; 
+    text-align: center; 
+    background: linear-gradient(to bottom, rgba(17,17,17,0.9), transparent);
+    backdrop-filter: blur(10px);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.tab-bar { 
+    background: rgba(22, 22, 22, 0.7); 
+    padding: 6px; 
+    border-radius: 20px; 
+    display: flex; 
+    max-width: 550px; 
+    margin: 0 auto; 
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(4px);
+}
+
+.tab-btn { 
+    padding: 12px 2px; 
+    border-radius: 14px; 
+    color: var(--text-dim); 
+    font-size: 0.75rem; 
+    font-weight: 600; 
+    cursor: pointer; 
+    flex: 1; 
+    text-align: center; 
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    border: 1px solid transparent;
+}
+
+.tab-btn i { font-size: 1rem; margin-bottom: 2px; }
+
+.tab-btn.active { 
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--primary); 
+    border: 1px solid rgba(197, 160, 89, 0.2);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+}
+
+.tab-btn.premium-active { 
+    background: var(--grad); 
+    color: #000; 
+    font-weight: 800; 
+    box-shadow: 0 4px 20px rgba(197, 160, 89, 0.4);
+    transform: scale(1.05);
+}
+
+/* Efeito de hover para desktop */
+@media (min-width: 768px) {
+    .tab-btn:hover:not(.active):not(.premium-active) {
+        color: #fff;
+        background: rgba(255,255,255,0.03);
+    }
+}
 
         .content { padding: 20px 15px; max-width: 500px; margin: auto; animation: fadeIn 0.5s ease; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -84,14 +142,26 @@
 
 <div id="main-app" style="display: none;">
     <div class="top-nav-container">
-        <div class="logo-main">✂️ ADMIN</div>
-        <div class="tab-bar">
-            <div class="tab-btn active" onclick="switchTab('agenda', this)">Agenda</div>
-            <div class="tab-btn" onclick="switchTab('equipe', this)">Equipe</div>
-            <div class="tab-btn" onclick="switchTab('folgas', this)">Folgas</div>
-            <div class="tab-btn" onclick="switchTab('premium', this)">⭐ Plano</div>
+    <div class="logo-main">✂️ ADMIN</div>
+    <div class="tab-bar">
+        <div class="tab-btn active" onclick="switchTab('agenda', this)">
+            <span>📅</span>
+            <span>Agenda</span>
+        </div>
+        <div class="tab-btn" onclick="switchTab('equipe', this)">
+            <span>👥</span>
+            <span>Equipe</span>
+        </div>
+        <div class="tab-btn" onclick="switchTab('folgas', this)">
+            <span>🔒</span>
+            <span>Folgas</span>
+        </div>
+        <div class="tab-btn" onclick="switchTab('premium', this)">
+            <span>⭐</span>
+            <span>Plano</span>
         </div>
     </div>
+</div>
 
     <div class="content">
         <div id="tab-agenda" class="tab-content">
@@ -318,21 +388,68 @@
         }
     }
 
+    // --- VARIÁVEL GLOBAL PARA CONTROLE ---
+    let assinaturaAtiva = false;
+
     async function verificarAssinatura() {
         const docRef = db.collection("configuracao").doc("assinatura");
         const doc = await docRef.get();
         let dataLimite;
+        
         if(!doc.exists) {
             dataLimite = new Date(); dataLimite.setDate(dataLimite.getDate()+30);
             await docRef.set({ premiumAte: firebase.firestore.Timestamp.fromDate(dataLimite), status: "Ativo" });
-        } else dataLimite = doc.data().premiumAte.toDate();
+        } else {
+            dataLimite = doc.data().premiumAte.toDate();
+        }
+
         const resta = Math.ceil((dataLimite.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
         const txt = document.getElementById('txt-restam');
+        
         if (resta <= 0) {
-            txt.innerHTML = `<span style="color:var(--danger)">⚠️ EXPIRADO</span>`;
-            document.querySelectorAll('.tab-content:not(#tab-premium)').forEach(c => c.style.display = 'none');
+            assinaturaAtiva = false; // Bloqueia o acesso globalmente
+            txt.innerHTML = `<span style="color:var(--danger)">⚠️ EXPIRADO EM ${dataLimite.toLocaleDateString()}</span>`;
+            
+            // Força a visualização apenas da aba premium
+            document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
+            document.getElementById('tab-premium').style.display = 'block';
+            
+            // Esconde os botões das outras abas para evitar cliques
+            document.querySelectorAll('.tab-btn:not(:last-child)').forEach(b => b.style.display = 'none');
             switchTab('premium', document.querySelector('.tab-btn:last-child'));
-        } else { txt.innerHTML = `STATUS: <span style="color:var(--success)">ATIVO</span> — <b>${resta}</b> dias`; }
+            
+            alert("Sua assinatura expirou. Por favor, renove para acessar os dados.");
+        } else {
+            assinaturaAtiva = true; // Libera o acesso
+            txt.innerHTML = `STATUS: <span style="color:var(--success)">ATIVO</span> — Restam <b>${resta}</b> dias`;
+            document.querySelectorAll('.tab-btn').forEach(b => b.style.display = 'flex');
+        }
+    }
+
+    // --- AGORA AJUSTAMOS AS FUNÇÕES DE CARREGAMENTO ---
+
+    function carregarAgenda() {
+        if(!assinaturaAtiva) return; // Se não estiver ativa, não faz nada
+        
+        const fId = document.getElementById('filtro-barbeiro-agenda').value;
+        let query = db.collection("agenda").orderBy("data", "asc");
+        // ... resto do seu código de carregar agenda
+    }
+
+    async function carregarEquipe() {
+        if(!assinaturaAtiva) return; // Se não estiver ativa, não faz nada
+        
+        db.collection("barbeiros").onSnapshot(snap => {
+            // ... resto do seu código de carregar equipe
+        });
+    }
+
+    function carregarFolgas() { 
+        if(!assinaturaAtiva) return; // Se não estiver ativa, não faz nada
+        
+        db.collection("bloqueios").orderBy("data", "desc").limit(10).onSnapshot(snap => {   
+            // ... resto do seu código de carregar folgas
+        });
     }
 
     function switchTab(tab, el) {
