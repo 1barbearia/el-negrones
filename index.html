@@ -8,61 +8,123 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
     <style>
-        :root { --primary: #c5a059; --bg: #0a0a0a; --card: #141414; --input-bg: #1d1d1d; --text: #ffffff; --text-dim: #999; --grad: linear-gradient(135deg, #c5a059 0%, #a68549 100%); }
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 10px; display: flex; justify-content: center; }
-        .container { width: 100%; max-width: 480px; padding-bottom: 50px; }
+        :root { 
+            --primary: #c5a059; 
+            --bg: #0a0a0a; 
+            --card: #141414; 
+            --input-bg: #1d1d1d; 
+            --text: #ffffff; 
+            --text-dim: #999; 
+            --grad: linear-gradient(135deg, #c5a059 0%, #a68549 100%); 
+        }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
+        
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 10px; display: flex; justify-content: center; overflow-x: hidden; }
+        
+        .container { width: 100%; max-width: 480px; padding-bottom: 50px; animation: fadeIn 0.8s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
         .header { text-align: center; padding: 40px 0 20px; }
-        .header h1 { font-weight: 900; font-size: 2rem; color: var(--primary); letter-spacing: 6px; margin: 0; }
-        .card { background: var(--card); padding: 25px; border-radius: 35px; border: 1px solid #222; }
+        .header h1 { font-weight: 900; font-size: 2.2rem; color: var(--primary); letter-spacing: 6px; margin: 0; text-shadow: 0 10px 20px rgba(197, 160, 89, 0.2); }
+        .header p { font-size: 0.8rem; letter-spacing: 4px; color: var(--text-dim); text-transform: uppercase; margin-top: 5px; }
+
+        .card { background: var(--card); padding: 25px; border-radius: 35px; border: 1px solid #222; box-shadow: 0 20px 40px rgba(0,0,0,0.4); }
+        
         label { font-size: 0.7rem; color: var(--primary); font-weight: 800; text-transform: uppercase; margin: 0 0 8px 10px; display: block; }
-        input, select { width: 100%; padding: 16px; margin-bottom: 20px; border-radius: 18px; border: 1px solid #282828; background: var(--input-bg); color: #fff; font-size: 1rem; outline: none; }
+        
+        input, select { width: 100%; padding: 18px; margin-bottom: 20px; border-radius: 20px; border: 1px solid #282828; background: var(--input-bg); color: #fff; font-size: 1rem; transition: 0.3s; }
+        input:focus { border-color: var(--primary); background: #222; }
+
         .horarios-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 25px; }
-        .hora-btn { background: #1a1a1a; padding: 15px 5px; text-align: center; border-radius: 15px; border: 1px solid #252525; cursor: pointer; color: var(--text-dim); transition: 0.3s; }
-        .hora-btn.selecionada { background: var(--grad); color: #000; font-weight: 800; border: none; transform: scale(1.05); }
-        .hora-btn.ocupada { background: #111; opacity: 0.3; color: #444; border: 1px dashed #222; cursor: not-allowed; }
-        .btn-principal { width: 100%; padding: 22px; border-radius: 20px; background: var(--grad); color: #000; font-weight: 900; border: none; cursor: pointer; text-transform: uppercase; font-size: 0.9rem; letter-spacing: 1px; }
+        
+        .hora-btn { 
+            background: #1a1a1a; padding: 15px 5px; text-align: center; border-radius: 18px; 
+            border: 1px solid #252525; cursor: pointer; color: var(--text-dim); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+            font-weight: 600; font-size: 0.9rem;
+        }
+        .hora-btn.selecionada { background: var(--grad); color: #000; font-weight: 800; border: none; transform: scale(1.08); box-shadow: 0 10px 20px rgba(197, 160, 89, 0.3); }
+        .hora-btn.ocupada { background: #111; opacity: 0.2; color: #444; border: 1px dashed #222; cursor: not-allowed; transform: scale(0.95); }
+
+        .btn-principal { 
+            width: 100%; padding: 22px; border-radius: 22px; background: var(--grad); color: #000; 
+            font-weight: 900; border: none; cursor: pointer; text-transform: uppercase; 
+            font-size: 1rem; letter-spacing: 1px; transition: 0.3s;
+            box-shadow: 0 10px 30px rgba(197, 160, 89, 0.2);
+        }
+        .btn-principal:active { transform: scale(0.97); }
+        .btn-principal:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        /* MODAL DE SUCESSO */
+        #modal-sucesso { 
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); 
+            z-index: 10000; align-items: center; justify-content: center; padding: 20px;
+        }
+        .success-card { 
+            background: var(--card); padding: 40px 30px; border-radius: 40px; border: 1px solid var(--primary); 
+            text-align: center; max-width: 350px; animation: pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes pop { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .check-icon { font-size: 4rem; color: var(--success); margin-bottom: 20px; display: block; }
+
         #bloqueio-total { display: none; position: fixed; inset: 0; background: #050505; z-index: 9999; align-items: center; justify-content: center; text-align: center; }
     </style>
 </head>
 <body>
 
+<audio id="snd-click" src="https://www.soundjay.com/buttons/sounds/button-16.mp3"></audio>
+<audio id="snd-success" src="https://www.soundjay.com/buttons/sounds/button-09.mp3"></audio>
+
+<div id="modal-sucesso">
+    <div class="success-card">
+        <span class="check-icon">✅</span>
+        <h2 style="color:var(--primary); font-weight:900;">RESERVA FEITA!</h2>
+        <p style="color:var(--text-dim); margin: 15px 0 25px;">Seu horário foi agendado e o barbeiro já foi notificado.</p>
+        <button class="btn-principal" onclick="location.reload()">Entendido</button>
+    </div>
+</div>
+
 <div id="bloqueio-total">
     <div style="padding: 30px;">
         <h1 style="color: var(--primary); font-size: 3rem; margin-bottom: 10px;">⚠️</h1>
         <h2 style="color: #fff; font-weight: 900;">SISTEMA INDISPONÍVEL</h2>
-        <p style="color: var(--text-dim); max-width: 300px; margin: auto;">O sistema de agendamentos está temporariamente suspenso.</p> 
+        <p style="color: var(--text-dim); max-width: 300px; margin: auto;">O sistema está em manutenção ou a assinatura expirou.</p> 
     </div>
 </div>
 
 <div class="container" id="app-content">
-    <div class="header"><h1>EL NEGRONES</h1><p>Barbearia</p></div>
+    <div class="header">
+        <h1>EL NEGRONES</h1>
+        <p>BARBEARIA</p>
+    </div>
+
     <div class="card">
-        <label>Profissional</label>
-        <select id="select-barbeiro" onchange="atualizarServicos()"><option value="">Carregando...</option></select>
+        <label>Quem vai cuidar do seu estilo?</label>
+        <select id="select-barbeiro" onchange="playClick(); atualizarServicos()">
+            <option value="">Carregando profissionais...</option>
+        </select>
         
-        <label>Serviço</label>
-        <select id="select-servico"><option value="">Escolha o profissional primeiro</option></select>
+        <label>O que vamos fazer hoje?</label>
+        <select id="select-servico" onchange="playClick()">
+            <option value="">Escolha o profissional primeiro</option>
+        </select>
         
-        <label>Data</label>
-        <input type="date" id="data-agenda" onchange="gerarHorarios()">
+        <label>Escolha o dia</label>
+        <input type="date" id="data-agenda" onchange="playClick(); gerarHorarios()">
         
-        <label>Horários Disponíveis (Min. 2h de antecedência)</label>
+        <label>Horários Disponíveis</label>
         <div class="horarios-grid" id="grid-horarios"></div>
         
         <label>Seu Nome</label>
-        <input type="text" id="nome-cliente" placeholder="Como devemos te chamar?">
+        <input type="text" id="nome-cliente" placeholder="Ex: João Silva">
         
         <label>WhatsApp</label>
-        <input type="tel" id="whatsapp-cliente" placeholder="11999999999">
+        <input type="tel" id="whatsapp-cliente" placeholder="(00) 00000-0000" oninput="maskWhatsApp(this)">
         
-        <button class="btn-principal" id="btn-confirmar" onclick="confirmarAgendamento()">Confirmar Reserva</button>
+        <button class="btn-principal" id="btn-confirmar" onclick="confirmarAgendamento()">Finalizar Agendamento</button>
     </div>
 </div>
 
 <script>
-    // --- CONFIGURAÇÃO FIREBASE ---
-    // --- CONFIGURAÇÃO FIREBASE ---
     const firebaseConfig = { 
         apiKey: "AIzaSyC0x8q1N7R70BYhfd2daedBjRKH0qupJiI", 
         authDomain: "elnes-720ce.firebaseapp.com", 
@@ -74,20 +136,28 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     
-    // --- VARIÁVEIS GLOBAIS ---
     let barbeirosData = [];
     let horarioSelecionado = null;
     let sistemaAtivo = true;
     let botTokenGlobal = "";
-    let adminChatIdGlobal = ""; // Variável para armazenar o ID do Admin
+    let adminChatIdGlobal = "";
 
     const horasBase = ["09:00","09:30","10:00","10:30","11:00","11:30","12:00","12:30","13:00","13:30","14:00","14:30","15:00","15:30","16:00","16:30","17:00","17:30","18:00","18:30","19:00","19:30"];
 
-    // --- INICIALIZAÇÃO ---
+    function playClick() { document.getElementById('snd-click').play().catch(()=>{}); }
+    function playSuccess() { document.getElementById('snd-success').play().catch(()=>{}); }
+
+    function maskWhatsApp(i) {
+        let v = i.value.replace(/\D/g,'');
+        v = v.replace(/^(\2d)(\d)/g,"($1) $2");
+        v = v.replace(/(\d)(\d{4})$/,"$1-$2");
+        i.value = v;
+    }
+
     window.onload = async () => {
         await verificarAssinatura();
         if(!sistemaAtivo) return;
-        await carregarConfiguracoesTelegram(); // Carrega Token e Chat ID do Admin
+        await carregarConfiguracoesTelegram();
         carregarBarbeiros();
         const hoje = new Date().toISOString().split("T")[0];
         document.getElementById('data-agenda').value = hoje;
@@ -109,12 +179,11 @@
         } catch(e) { console.error("Erro assinatura:", e); }
     }
 
-    // BUSCA AS CONFIGURAÇÕES QUE VOCÊ SALVOU NO ADMIN
     async function carregarConfiguracoesTelegram() {
         const doc = await db.collection("configuracao").doc("telegram").get();
         if(doc.exists) {
             botTokenGlobal = doc.data().token;
-            adminChatIdGlobal = doc.data().chatId; // O ID que você salvou no Admin
+            adminChatIdGlobal = doc.data().chatId;
         }
     }
 
@@ -140,6 +209,8 @@
         const grid = document.getElementById("grid-horarios");
         if(!bId || !dataSel) return;
 
+        grid.innerHTML = "<p style='grid-column: 1/-1; text-align:center; font-size:0.8rem; color:var(--primary)'>Consultando horários...</p>";
+
         const agSnap = await db.collection("agenda").where("data", "==", dataSel).where("barbeiroId", "==", bId).get();
         const blSnap = await db.collection("bloqueios").where("data", "==", dataSel).where("barbeiroId", "==", bId).get();
         const ocupados = [...agSnap.docs.map(d => d.data().hora), ...blSnap.docs.map(d => d.data().hora)];
@@ -161,6 +232,7 @@
             div.textContent = hora;
             div.onclick = () => {
                 if(indisponivel) return;
+                playClick();
                 document.querySelectorAll(".hora-btn").forEach(e => e.classList.remove("selecionada"));
                 div.classList.add("selecionada"); horarioSelecionado = hora;
             };
@@ -176,19 +248,18 @@
         const data = document.getElementById("data-agenda").value;
         const serv = document.getElementById("select-servico").value;
 
-        if(!nome || !horarioSelecionado || !bId || !serv) return alert("Preencha todos os campos!");
+        if(!nome || !horarioSelecionado || !bId || !serv) {
+            return alert("Por favor, selecione todos os campos e o horário.");
+        }
 
         const bAlvo = barbeirosData.find(x => x.id === bId);
         const bNome = bAlvo ? bAlvo.nome : "";
-        
-        // Se o barbeiro tiver um chatID próprio, usa ele. Se não, usa o Global do Admin.
         const destinoID = (bAlvo && bAlvo.chatId) ? bAlvo.chatId : adminChatIdGlobal;
 
         btn.disabled = true;
-        btn.innerText = "PROCESSANDO...";
+        btn.innerText = "RESERVANDO...";
 
         try {
-            // 1. Salva no Firebase
             await db.collection("agenda").add({ 
                 cliente: nome, 
                 clienteWhatsapp: whatsapp, 
@@ -200,7 +271,6 @@
                 criadoEm: firebase.firestore.FieldValue.serverTimestamp() 
             });
             
-            // 2. Envia para o Telegram
             if(botTokenGlobal && destinoID) {
                 const dataFormatada = data.split('-').reverse().join('/');
                 const mensagemTelegram = `🚀 *NOVO AGENDAMENTO*\n\n` +
@@ -222,13 +292,14 @@
                 });
             }
 
-            alert("Reserva confirmada com sucesso!");
-            location.reload();
+            playSuccess();
+            document.getElementById('modal-sucesso').style.display = 'flex';
+
         } catch (e) { 
             console.error(e);
             alert("Erro ao concluir agendamento."); 
             btn.disabled = false; 
-            btn.innerText = "Confirmar Reserva"; 
+            btn.innerText = "Finalizar Agendamento"; 
         }
     }
 </script>
