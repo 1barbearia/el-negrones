@@ -257,15 +257,47 @@
         const docRef = db.collection("configuracao").doc("assinatura");
         const doc = await docRef.get();
         let dataLimite;
+
         if(!doc.exists) {
-            const hoje = new Date(); dataLimite = new Date(); dataLimite.setDate(hoje.getDate() + 30);
-            await docRef.set({ dataInstalacao: firebase.firestore.Timestamp.fromDate(hoje), status: "Ativo" });
+            const hoje = new Date(); 
+            dataLimite = new Date(); 
+            dataLimite.setDate(hoje.getDate() + 30);
+            await docRef.set({ 
+                dataInstalacao: firebase.firestore.Timestamp.fromDate(hoje), 
+                status: "Ativo" 
+            });
         } else {
             const d = doc.data();
             dataLimite = d.premiumAte ? d.premiumAte.toDate() : new Date(d.dataInstalacao.toDate().getTime() + 30*24*60*60*1000);
         }
-        const resta = Math.ceil((dataLimite - new Date()) / (1000 * 60 * 60 * 24));
-        document.getElementById('txt-restam').innerHTML = `STATUS: ATIVO<br>Vencimento: ${dataLimite.toLocaleDateString('pt-BR')}<br>Restam ${resta} dias.`;
+
+        const hoje = new Date();
+        const resta = Math.ceil((dataLimite.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24));
+        const txtRestam = document.getElementById('txt-restam');
+        
+        if (resta <= 0) {
+            // --- PLANO EXPIRADO: BLOQUEAR INTERFACE ---
+            txtRestam.innerHTML = `<span style="color:var(--danger); font-weight:900;">⚠️ ACESSO BLOQUEADO: PLANO EXPIRADO</span><br>Vencimento: ${dataLimite.toLocaleDateString('pt-BR')}`;
+            
+            // Esconde todas as abas de trabalho
+            document.getElementById('tab-agenda').style.display = 'none';
+            document.getElementById('tab-equipe').style.display = 'none';
+            document.getElementById('tab-folgas').style.display = 'none';
+            
+            // Força a visualização na aba de Plano (Premium)
+            switchTab('premium', document.querySelector('.tab-btn:last-child'));
+            
+            // Desativa a barra de navegação para o usuário não sair da tela de renovação
+            document.querySelector('.tab-bar').style.opacity = '0.3';
+            document.querySelector('.tab-bar').style.pointerEvents = 'none';
+
+            alert("Sua assinatura expirou. Renove para continuar utilizando o painel.");
+        } else {
+            // PLANO ATIVO: LIBERAR TUDO
+            txtRestam.innerHTML = `STATUS: <span style="color:var(--success)">ATIVO</span><br>Vencimento: ${dataLimite.toLocaleDateString('pt-BR')}<br>Restam <b>${resta}</b> dias.`;
+            document.querySelector('.tab-bar').style.opacity = '1';
+            document.querySelector('.tab-bar').style.pointerEvents = 'auto';
+        }
     }
 
     async function carregarEquipe() {
