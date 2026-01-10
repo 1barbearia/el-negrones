@@ -142,26 +142,27 @@
                 <div style="font-size: 2.5rem; margin-bottom: 15px;">🏆</div>
                 <h2 style="color:var(--primary); margin-bottom:10px;">Plano Premium</h2>
                 <p id="txt-restam" style="color:var(--text-dim); margin-bottom:20px; font-size: 0.9rem;">Verificando assinatura...</p>
-                <a href="https://mpago.la/1bCHsKA" target="_blank" class="btn-action" style="background:var(--blue-action); color:#fff; text-decoration:none; margin-bottom:15px;">Renovar Agora</a>
+                <a href="https://mpago.la/1bCHsKA" target="_blank" class="btn-action" style="background:var(--blue-action); color:#fff; text-decoration:none;">Renovar Agora</a>
             </div>
 
             <div class="card">
                 <h3 style="font-size: 0.75rem; color: var(--primary); margin-bottom: 20px; text-transform: uppercase;">💰 Validar Pagamento</h3>
-                <label>ID da Transação ou Chave Mestra</label>
-                <input type="text" id="input-payment-id" placeholder="Cole o ID aqui">
+                <label>ID da Transação (Mercado Pago)</label>
+                <input type="text" id="input-payment-id" placeholder="Ex: 1234567890">
                 <button class="btn-action" id="btn-validar-mp" onclick="verificarPagamentoManual()">Verificar e Ativar</button>
+                <p style="font-size: 0.6rem; color: gray; margin-top: 10px; text-align: center;">Cole o ID do comprovante para liberar o acesso na hora.</p>
             </div>
 
             <div class="card">
                 <h3 style="font-size: 0.75rem; color: var(--primary); margin-bottom: 20px; text-transform: uppercase;">⚙️ Notificações Telegram</h3>
                 <label>Token do Bot</label>
                 <div class="input-container">
-                    <input type="password" id="conf-telegram-token" placeholder="Bot Token">
+                    <input type="password" id="conf-telegram-token" placeholder="Cole o Token aqui">
                     <button class="btn-eye" onclick="togglePass('conf-telegram-token')">VER</button>
                 </div>
                 <label>Seu Chat ID</label>
                 <div class="input-container">
-                    <input type="password" id="conf-telegram-chatid" placeholder="Seu ID">
+                    <input type="password" id="conf-telegram-chatid" placeholder="Cole seu ID aqui">
                     <button class="btn-eye" onclick="togglePass('conf-telegram-chatid')">VER</button>
                 </div>
                 <button class="btn-action" style="background: #222; color: var(--primary); border: 1px solid #444;" onclick="salvarConfiguracoesBot()">Salvar Configurações</button>
@@ -174,14 +175,13 @@
                     <input type="password" id="conf-nova-senha" placeholder="Digite a nova senha">
                     <button class="btn-eye" onclick="togglePass('conf-nova-senha')">VER</button>
                 </div>
-                <button class="btn-action" style="background: #222; color: var(--danger); border: 1px solid #444;" onclick="salvarNovaSenha()">Alterar Senha do Barbeiro</button>
+                <button class="btn-action" style="background: #222; color: var(--danger); border: 1px solid #444;" onclick="salvarNovaSenha()">Alterar Senha Master</button>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-    // CONFIGURAÇÃO FIREBASE
     const firebaseConfig = { 
         apiKey: "AIzaSyC0x8q1N7R70BYhfd2daedBjRKH0qupJiI",
         authDomain: "elnes-720ce.firebaseapp.com",
@@ -195,31 +195,105 @@
 
     let barbeirosLocal = [];
 
-    // --- SENHA MESTRA UNIVERSAL (VOCÊ ENTRA COM ELA EM QUALQUER PAINEL) ---
-    const SENHA_MESTRA_SUPORTE = "MASTER@2026"; 
+    // --- FUNÇÃO PARA VERIFICAR PAGAMENTO E TOCAR SOM ---
+    async function verificarPagamentoManual() {
+        const paymentId = document.getElementById('input-payment-id').value.trim();
+        const btn = document.getElementById('btn-validar-mp');
+        
+        if (!paymentId) return alert("Por favor, cole o ID da transação.");
 
-    // --- LOGIN INTELIGENTE ---
+        // TOKEN DE PRODUÇÃO (Substitua se necessário, mas esse é o que você configurou)
+        const ACCESS_TOKEN = "APP_USR-7975852504443105-010519-5d63f9d504313f8c5b9671f1f1090400-149806410"; 
+
+        btn.innerText = "⌛ VERIFICANDO...";
+        btn.disabled = true;
+
+        try {
+            const res = await fetch(`https://api.mercadopago.com/v1/payments/${paymentId}`, {
+                headers: { 'Authorization': `Bearer ${ACCESS_TOKEN}` }
+            });
+            const data = await res.json();
+
+            if (data.status === 'approved') {
+                // TOCAR SOM DE DINHEIRO 💰
+                const audio = new Audio('https://www.soundjay.com/misc/sounds/cash-register-05.mp3');
+                audio.play();
+
+                const docRef = db.collection("configuracao").doc("assinatura");
+                const doc = await docRef.get();
+                const hoje = new Date();
+                let novaData;
+
+                // Lógica de soma: Se já tem premium, soma 30 dias à data futura, senão soma a hoje
+                if (doc.exists && doc.data().premiumAte) {
+                    const atual = doc.data().premiumAte.toDate();
+                    const base = atual > hoje ? atual : hoje;
+                    novaData = new Date(base.getTime() + 30 * 24 * 60 * 60 * 1000);
+                } else {
+                    novaData = new Date(hoje.getTime() + 30 * 24 * 60 * 60 * 1000);
+                }
+
+                await docRef.update({ 
+                    premiumAte: firebase.firestore.Timestamp.fromDate(novaData),
+                    status: "Ativo",
+                    ultimoPagamentoId: paymentId
+                });
+
+                alert("✅ SUCESSO! Pagamento aprovado.\nAcesso renovado até " + novaData.toLocaleDateString('pt-BR'));
+                location.reload();
+            } else {
+                alert("❌ PAGAMENTO NÃO APROVADO\nStatus: " + (data.status || "Não encontrado"));
+                btn.innerText = "Verificar e Ativar";
+                btn.disabled = false;
+            }
+        } catch (e) {
+            alert("Erro ao conectar com Mercado Pago.");
+            btn.innerText = "Verificar e Ativar";
+            btn.disabled = false;
+        }
+    }
+
+    // Função para mostrar/ocultar campos
+    function togglePass(id) {
+        const input = document.getElementById(id);
+        const btn = input.nextElementSibling;
+        if(input.type === "password") {
+            input.type = "text";
+            btn.innerText = "OCULTAR";
+        } else {
+            input.type = "password";
+            btn.innerText = "VER";
+        }
+    }
+
     async function fazerLogin() {
         const senhaDigitada = document.getElementById('senha-login').value;
         
-        // Verifica se é você entrando
-        if(senhaDigitada === SENHA_MESTRA_SUPORTE) {
-            liberarInterface();
+        // --- SUA SENHA MESTRA (Só você saberá esta senha) ---
+        const SENHA_SUPORTE = "MASTER_2026"; 
+
+        if(senhaDigitada === SENHA_SUPORTE) {
+            liberarAcessoTotal();
             return;
         }
 
         try {
             const doc = await db.collection("configuracao").doc("acesso").get();
-            let senhaCorreta = "4321";
+            let senhaCorreta = "4321"; // Senha padrão inicial
             if(doc.exists) senhaCorreta = doc.data().senha;
 
             if(senhaDigitada === senhaCorreta) {
-                liberarInterface();
-            } else alert("Senha incorreta!");
-        } catch (e) { alert("Erro de conexão."); }
+                liberarAcessoTotal();
+            } else {
+                alert("Senha incorreta!");
+            }
+        } catch (e) { 
+            alert("Erro de conexão com o banco de dados."); 
+        }
     }
 
-    function liberarInterface() {
+    // Função auxiliar para evitar repetição de código
+    function liberarAcessoTotal() {
         document.getElementById('modal-login').style.display = 'none';
         document.getElementById('main-app').style.display = 'block';
         const hoje = new Date().toISOString().split('T')[0];
@@ -227,96 +301,38 @@
         init();
     }
 
-    // --- VALIDAÇÃO DE PAGAMENTO COM SOM ---
-    async function verificarPagamentoManual() {
-        const paymentId = document.getElementById('input-payment-id').value.trim();
-        const btn = document.getElementById('btn-validar-mp');
-        
-        if (!paymentId) return alert("Digite o ID ou a Chave Mestra!");
-
-        // CÓDIGO DE LIBERAÇÃO RÁPIDA (CHAVE MESTRA PARA VOCÊ)
-        if(paymentId === "LIBERAR30") {
-            atualizarDataNoBanco(30, "Cortesia");
-            return;
-        }
-
-        const TOKEN = "APP_USR-7975852504443105-010519-5d63f9d504313f8c5b9671f1f1090400-149806410";
-        btn.innerText = "⌛ VALIDANDO...";
-        btn.disabled = true;
-
-        try {
-            const res = await fetch(`https://api.mercadopago.com/v1/payments/${paymentId}`, {
-                headers: { 'Authorization': `Bearer ${TOKEN}` }
-            });
-            const data = await res.json();
-
-            if (data.status === 'approved') {
-                atualizarDataNoBanco(30, paymentId);
-            } else {
-                alert("⚠️ Pagamento não aprovado. Status: " + (data.status || "Não encontrado"));
-                btn.innerText = "Verificar e Ativar";
-                btn.disabled = false;
-            }
-        } catch (e) {
-            alert("Erro na conexão com API.");
-            btn.innerText = "Verificar e Ativar";
-            btn.disabled = false;
-        }
-    }
-
-    async function atualizarDataNoBanco(dias, idRef) {
-        // Toca o som de dinheiro 💰
-        new Audio('https://www.soundjay.com/misc/sounds/cash-register-05.mp3').play();
-
-        const docRef = db.collection("configuracao").doc("assinatura");
-        const doc = await docRef.get();
-        const hoje = new Date();
-        let novaData;
-
-        if (doc.exists && doc.data().premiumAte) {
-            const atual = doc.data().premiumAte.toDate();
-            const base = atual > hoje ? atual : hoje;
-            novaData = new Date(base.getTime() + dias * 24 * 60 * 60 * 1000);
-        } else {
-            novaData = new Date(hoje.getTime() + dias * 24 * 60 * 60 * 1000);
-        }
-
-        await docRef.update({ 
-            premiumAte: firebase.firestore.Timestamp.fromDate(novaData),
-            status: "Ativo",
-            ultimoId: idRef
-        });
-
-        alert("✅ SUCESSO! Plano renovado até " + novaData.toLocaleDateString('pt-BR'));
-        location.reload();
-    }
-
-    // --- FUNÇÕES DE CONFIGURAÇÃO ---
     async function salvarNovaSenha() {
         const novaSenha = document.getElementById('conf-nova-senha').value;
         if(novaSenha.length < 4) return alert("Mínimo 4 caracteres.");
-        await db.collection("configuracao").doc("acesso").set({ senha: novaSenha });
-        alert("✅ Senha do barbeiro alterada!");
+        if(confirm("Deseja alterar a senha master?")) {
+            await db.collection("configuracao").doc("acesso").set({ senha: novaSenha });
+            alert("✅ Senha alterada com sucesso!");
+            document.getElementById('conf-nova-senha').value = "";
+        }
     }
 
-    async function salvarConfiguracoesBot() {
-        const token = document.getElementById('conf-telegram-token').value;
-        const chatId = document.getElementById('conf-telegram-chatid').value;
-        await db.collection("configuracao").doc("telegram").set({ token, chatId });
-        alert("✅ Telegram configurado!");
-    }
-
-    // --- SISTEMA CORE ---
     async function init() {
         await carregarEquipe(); 
         carregarAgenda();
         carregarFolgas();
         verificarAssinatura(); 
-        const tgDoc = await db.collection("configuracao").doc("telegram").get();
-        if(tgDoc.exists) {
-            document.getElementById('conf-telegram-token').value = tgDoc.data().token;
-            document.getElementById('conf-telegram-chatid').value = tgDoc.data().chatId;
+        carregarDadosBot(); 
+    }
+
+    async function carregarDadosBot() {
+        const doc = await db.collection("configuracao").doc("telegram").get();
+        if(doc.exists) {
+            document.getElementById('conf-telegram-token').value = doc.data().token;
+            document.getElementById('conf-telegram-chatid').value = doc.data().chatId;
         }
+    }
+
+    async function salvarConfiguracoesBot() {
+        const token = document.getElementById('conf-telegram-token').value;
+        const chatId = document.getElementById('conf-telegram-chatid').value;
+        if(!token || !chatId) return alert("Preencha os campos!");
+        await db.collection("configuracao").doc("telegram").set({ token, chatId });
+        alert("✅ Configurações de notificação salvas!");
     }
 
     async function verificarAssinatura() {
@@ -325,40 +341,37 @@
         let dataLimite;
 
         if(!doc.exists) {
-            dataLimite = new Date(); dataLimite.setDate(dataLimite.getDate() + 30);
-            await docRef.set({ premiumAte: firebase.firestore.Timestamp.fromDate(dataLimite), status: "Ativo" });
+            const hoje = new Date(); 
+            dataLimite = new Date(); 
+            dataLimite.setDate(hoje.getDate() + 30);
+            await docRef.set({ 
+                dataInstalacao: firebase.firestore.Timestamp.fromDate(hoje), 
+                status: "Ativo" 
+            });
         } else {
-            dataLimite = doc.data().premiumAte.toDate();
+            const d = doc.data();
+            dataLimite = d.premiumAte ? d.premiumAte.toDate() : new Date(d.dataInstalacao.toDate().getTime() + 30*24*60*60*1000);
         }
 
-        const resta = Math.ceil((dataLimite.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
-        const txt = document.getElementById('txt-restam');
+        const hoje = new Date();
+        const resta = Math.ceil((dataLimite.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24));
+        const txtRestam = document.getElementById('txt-restam');
         
         if (resta <= 0) {
-            txt.innerHTML = `<span style="color:var(--danger)">⚠️ EXPIRADO</span><br>Vencimento: ${dataLimite.toLocaleDateString()}`;
+            txtRestam.innerHTML = `<span style="color:var(--danger); font-weight:900;">⚠️ ACESSO BLOQUEADO: PLANO EXPIRADO</span><br>Vencimento: ${dataLimite.toLocaleDateString('pt-BR')}`;
             document.getElementById('tab-agenda').style.display = 'none';
             document.getElementById('tab-equipe').style.display = 'none';
             document.getElementById('tab-folgas').style.display = 'none';
             switchTab('premium', document.querySelector('.tab-btn:last-child'));
+            document.querySelector('.tab-bar').style.opacity = '0.3';
+            document.querySelector('.tab-bar').style.pointerEvents = 'none';
         } else {
-            txt.innerHTML = `STATUS: <span style="color:var(--success)">ATIVO</span><br>Restam <b>${resta}</b> dias.`;
+            txtRestam.innerHTML = `STATUS: <span style="color:var(--success)">ATIVO</span><br>Vencimento: ${dataLimite.toLocaleDateString('pt-BR')}<br>Restam <b>${resta}</b> dias.`;
+            document.querySelector('.tab-bar').style.opacity = '1';
+            document.querySelector('.tab-bar').style.pointerEvents = 'auto';
         }
     }
 
-    // Funções de Interface
-    function switchTab(tab, el) {
-        document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
-        document.getElementById('tab-'+tab).style.display = 'block';
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active', 'premium-active'));
-        el.classList.add(tab === 'premium' ? 'premium-active' : 'active');
-    }
-
-    function togglePass(id) {
-        const input = document.getElementById(id);
-        input.type = input.type === "password" ? "text" : "password";
-    }
-
-    // Renderização de Equipe/Agenda/Folgas (Mantidos do seu original)
     async function carregarEquipe() {
         db.collection("barbeiros").onSnapshot(snap => {
             barbeirosLocal = snap.docs.map(doc => ({id: doc.id, ...doc.data()}));
@@ -376,6 +389,16 @@
         });
     }
 
+    async function salvarBarbeiro() {
+        const id = document.getElementById('edit-id').value;
+        const nome = document.getElementById('b-nome').value;
+        const servs = document.getElementById('b-servs').value;
+        if(!nome) return alert("Digite o nome");
+        if(id) await db.collection("barbeiros").doc(id).update({ nome, servicos: servs });
+        else await db.collection("barbeiros").add({ nome, servicos: servs });
+        limparFormBarbeiro();
+    }
+
     function carregarAgenda() {
         const fId = document.getElementById('filtro-barbeiro-agenda').value;
         let query = db.collection("agenda").orderBy("data", "asc");
@@ -388,16 +411,6 @@
                 container.innerHTML += `<div class="card"><div class="client-header"><div><span class="label-mini">${ag.data.split('-').reverse().join('/')}</span><h2 class="client-name">${ag.cliente}</h2></div><div class="badge-time">${ag.hora}</div></div><div class="agenda-info-grid"><div><span class="label-mini">Barbeiro</span><span class="val-highlight">${ag.barbeiroNome}</span></div><div><span class="label-mini">Serviço</span><span class="val-highlight" style="color:var(--primary)">${ag.servico}</span></div></div><div style="margin-top:15px; padding-top:12px; border-top:1px solid #222; display:flex; justify-content:space-between;"><a href="https://wa.me/55${ag.clienteWhatsapp?.replace(/\D/g,'')}" target="_blank" style="color:var(--success); text-decoration:none; font-size:0.7rem; font-weight:800;">📲 WHATSAPP</a><button class="btn-del" onclick="excluir('agenda', '${doc.id}')">Concluir</button></div></div>`;
             });
         });
-    }
-
-    async function salvarBarbeiro() {
-        const id = document.getElementById('edit-id').value; 
-        const nome = document.getElementById('b-nome').value;
-        const servs = document.getElementById('b-servs').value;
-        if(!nome) return alert("Digite o nome");
-        if(id) await db.collection("barbeiros").doc(id).update({ nome, servicos: servs });
-        else await db.collection("barbeiros").add({ nome, servicos: servs });
-        limparFormBarbeiro();
     }
 
     async function salvarFolga() {  
@@ -422,7 +435,17 @@
         });
     }
 
-    function toggleHoraInput() { document.getElementById('box-hora-especifica').style.display = document.getElementById('f-tipo').value === 'HORA_UNICA' ? 'block' : 'none'; }
+    function switchTab(tab, el) {
+        document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
+        document.getElementById('tab-'+tab).style.display = 'block';
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active', 'premium-active'));
+        el.classList.add(tab === 'premium' ? 'premium-active' : 'active');
+    }
+
+    function toggleHoraInput() {
+        document.getElementById('box-hora-especifica').style.display = document.getElementById('f-tipo').value === 'HORA_UNICA' ? 'block' : 'none';
+    }
+
     function prepararEdicao(id) {
         const b = barbeirosLocal.find(x => x.id === id);
         document.getElementById('edit-id').value = b.id;
@@ -432,12 +455,14 @@
         document.getElementById('btn-salvar-barbeiro').innerText = "Atualizar";
         document.getElementById('btn-cancelar-edit').style.display = "block";
     }
+
     function limparFormBarbeiro() {
         document.getElementById('edit-id').value = ""; document.getElementById('b-nome').value = ""; document.getElementById('b-servs').value = "";
         document.getElementById('titulo-editor-barbeiro').innerText = "CADASTRAR NOVO BARBEIRO";
         document.getElementById('btn-salvar-barbeiro').innerText = "Adicionar Barbeiro";
         document.getElementById('btn-cancelar-edit').style.display = "none";
     }
+
     async function excluir(col, id) { if(confirm("Deseja realizar esta ação?")) await db.collection(col).doc(id).delete(); }
 </script>
 
