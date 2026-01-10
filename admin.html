@@ -139,23 +139,26 @@
             </div>
 
             <div class="card">
-                <h3 style="font-size: 0.75rem; color: var(--primary); margin-bottom: 20px; text-transform: uppercase; letter-spacing: 1px;">⚙️ Configuração de Notificações</h3>
-                
-                <label>Token do Bot (Telegram)</label>
-                <input type="text" id="conf-telegram-token" placeholder="Cole o Token do @BotFather aqui">
-                
-                <label>Seu Chat ID (Telegram)</label>
-                <input type="text" id="conf-telegram-chatid" placeholder="Cole seu ID do @userinfobot aqui">
-                
+                <h3 style="font-size: 0.75rem; color: var(--primary); margin-bottom: 20px; text-transform: uppercase; letter-spacing: 1px;">⚙️ Notificações Telegram</h3>
+                <label>Token do Bot</label>
+                <input type="text" id="conf-telegram-token" placeholder="Aguardando...">
+                <label>Seu Chat ID</label>
+                <input type="text" id="conf-telegram-chatid" placeholder="Aguardando...">
                 <button class="btn-action" style="background: #222; color: var(--primary); border: 1px solid #444;" onclick="salvarConfiguracoesBot()">Salvar Configurações</button>
-                <p style="font-size: 0.6rem; color: gray; margin-top: 15px; text-align: center; text-transform: uppercase;">Esses dados são usados para enviar avisos de novos agendamentos.</p>
+            </div>
+
+            <div class="card">
+                <h3 style="font-size: 0.75rem; color: var(--primary); margin-bottom: 20px; text-transform: uppercase; letter-spacing: 1px;">🔐 Segurança do Painel</h3>
+                <label>Nova Senha de Acesso</label>
+                <input type="password" id="conf-nova-senha" placeholder="Mínimo 4 dígitos">
+                <button class="btn-action" style="background: #222; color: var(--danger); border: 1px solid #444;" onclick="salvarNovaSenha()">Alterar Senha Master</button>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-   const firebaseConfig = { 
+    const firebaseConfig = { 
         apiKey: "AIzaSyC0x8q1N7R70BYhfd2daedBjRKH0qupJiI",
         authDomain: "elnes-720ce.firebaseapp.com",
         projectId: "elnes-720ce",
@@ -168,14 +171,50 @@
 
     let barbeirosLocal = [];
 
-    function fazerLogin() {
-        if(document.getElementById('senha-login').value === "4321") {
-            document.getElementById('modal-login').style.display = 'none';
-            document.getElementById('main-app').style.display = 'block';
-            const hoje = new Date().toISOString().split('T')[0];
-            document.getElementById('f-data').setAttribute('min', hoje);
-            init();
-        } else alert("Senha incorreta!");
+    // --- LOGIN COM SENHA DO BANCO ---
+    async function fazerLogin() {
+        const senhaDigitada = document.getElementById('senha-login').value;
+        
+        try {
+            const doc = await db.collection("configuracao").doc("acesso").get();
+            let senhaCorreta = "4321"; // Senha padrão caso não exista no banco
+
+            if(doc.exists) {
+                senhaCorreta = doc.data().senha;
+            }
+
+            if(senhaDigitada === senhaCorreta) {
+                document.getElementById('modal-login').style.display = 'none';
+                document.getElementById('main-app').style.display = 'block';
+                const hoje = new Date().toISOString().split('T')[0];
+                document.getElementById('f-data').setAttribute('min', hoje);
+                init();
+            } else {
+                alert("Senha incorreta!");
+            }
+        } catch (e) {
+            alert("Erro ao conectar ao servidor.");
+        }
+    }
+
+    // --- SALVAR NOVA SENHA ---
+    async function salvarNovaSenha() {
+        const novaSenha = document.getElementById('conf-nova-senha').value;
+
+        if(novaSenha.length < 4) return alert("A senha deve ter pelo menos 4 caracteres.");
+
+        if(confirm("Deseja realmente alterar a senha de acesso ao Admin?")) {
+            try {
+                await db.collection("configuracao").doc("acesso").set({
+                    senha: novaSenha,
+                    atualizadoEm: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                alert("✅ Senha alterada! Use a nova senha no próximo acesso.");
+                document.getElementById('conf-nova-senha').value = "";
+            } catch (e) {
+                alert("Erro ao salvar nova senha.");
+            }
+        }
     }
 
     async function init() {
@@ -192,12 +231,10 @@
         if(doc.exists) {
             const campoToken = document.getElementById('conf-telegram-token');
             const campoChatId = document.getElementById('conf-telegram-chatid');
-            
             campoToken.value = "********"; 
             campoChatId.value = "********";
             campoToken.disabled = true;
             campoChatId.disabled = true;
-
             const btn = document.querySelector("button[onclick='salvarConfiguracoesBot()']");
             if(btn) {
                 btn.innerText = "Editar Configurações";
@@ -209,14 +246,8 @@
     function liberarEdicaoBot(btn) {
         const campoToken = document.getElementById('conf-telegram-token');
         const campoChatId = document.getElementById('conf-telegram-chatid');
-        
-        campoToken.value = "";
-        campoChatId.value = "";
-        campoToken.disabled = false;
-        campoChatId.disabled = false;
-        campoToken.placeholder = "Digite o novo Token";
-        campoChatId.placeholder = "Digite o novo Chat ID";
-        
+        campoToken.value = ""; campoChatId.value = "";
+        campoToken.disabled = false; campoChatId.disabled = false;
         btn.innerText = "Salvar Configurações";
         btn.setAttribute("onclick", "salvarConfiguracoesBot()");
     }
@@ -224,71 +255,51 @@
     async function salvarConfiguracoesBot() {
         const token = document.getElementById('conf-telegram-token').value;
         const chatId = document.getElementById('conf-telegram-chatid').value;
+        if(!token || !chatId || token === "********") return alert("Preencha corretamente.");
         
-        if(!token || !chatId || token === "********") {
-            return alert("Por favor, preencha o Token e o Chat ID corretamente.");
-        }
-        
-        try {
-            await db.collection("configuracao").doc("telegram").set({
-                token: token,
-                chatId: chatId,
-                atualizadoEm: firebase.firestore.FieldValue.serverTimestamp()
-            });
-            
-            alert("✅ Configurações salvas! O Bot já pode enviar notificações.");
-            carregarDadosBot(); 
-        } catch (e) {
-            alert("Erro ao salvar: " + e.message);
-        }
+        await db.collection("configuracao").doc("telegram").set({
+            token: token,
+            chatId: chatId,
+            atualizadoEm: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        alert("✅ Notificações configuradas!");
+        carregarDadosBot();
     }
 
-    // --- GESTÃO DE ASSINATURA ---
+    // --- ASSINATURA ---
     async function verificarAssinatura() {
         const docRef = db.collection("configuracao").doc("assinatura");
         const doc = await docRef.get();
         let dataLimite;
-
         if(!doc.exists) {
             const hoje = new Date();
             dataLimite = new Date();
             dataLimite.setDate(hoje.getDate() + 30);
-            await docRef.set({
-                dataInstalacao: firebase.firestore.Timestamp.fromDate(hoje),
-                premiumAte: null,
-                status: "Ativo"
-            });
+            await docRef.set({ dataInstalacao: firebase.firestore.Timestamp.fromDate(hoje), premiumAte: null, status: "Ativo" });
         } else {
             const dados = doc.data();
-            const dataInstalacao = dados.dataInstalacao.toDate();
-            dataLimite = dados.premiumAte ? dados.premiumAte.toDate() : new Date(dataInstalacao.getTime() + 30 * 24 * 60 * 60 * 1000);
+            dataLimite = dados.premiumAte ? dados.premiumAte.toDate() : new Date(dados.dataInstalacao.toDate().getTime() + 30*24*60*60*1000);
         }
-
         const hoje = new Date();
         const resta = Math.ceil((dataLimite - hoje) / (1000 * 60 * 60 * 24));
-        const vencimentoFormatado = dataLimite.toLocaleDateString('pt-BR');
-
         if (resta <= 0) {
-            document.body.innerHTML = `<div style="height:100vh; background:#050505; color:white; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:30px;"><h1>ASSINATURA EXPIRADA</h1><p>Venceu em ${vencimentoFormatado}</p><a href="https://mpago.la/1bCHsKA" style="background:var(--grad); padding:20px; color:black; text-decoration:none; font-weight:bold; border-radius:10px;">RENOVAR</a></div>`;
+            document.body.innerHTML = `<div style="height:100vh; background:#050505; color:white; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:30px;"><h1>EXPIRADO</h1><p>Venceu em ${dataLimite.toLocaleDateString()}</p><a href="https://mpago.la/1bCHsKA" style="background:var(--grad); padding:20px; color:black; text-decoration:none; font-weight:bold; border-radius:10px;">RENOVAR</a></div>`;
             return false;
-        } else {
-            document.getElementById('txt-restam').innerHTML = `STATUS: ATIVO<br>Vencimento: ${vencimentoFormatado}<br>Restam ${resta} dias.`;
-            return true;
         }
+        document.getElementById('txt-restam').innerHTML = `STATUS: ATIVO<br>Vencimento: ${dataLimite.toLocaleDateString()}<br>Restam ${resta} dias.`;
+        return true;
     }
 
-    // --- GESTÃO DE EQUIPE ---
+    // --- EQUIPE ---
     async function carregarEquipe() {
         db.collection("barbeiros").onSnapshot(snap => {
             barbeirosLocal = snap.docs.map(doc => ({id: doc.id, ...doc.data()}));
             const selectFolga = document.getElementById('f-barbeiro');
             const selectFiltro = document.getElementById('filtro-barbeiro-agenda');
             const renderEquipe = document.getElementById('render-equipe');
-            
             selectFolga.innerHTML = '<option value="">Escolha...</option>';
             selectFiltro.innerHTML = '<option value="todos">📅 Mostrar Todos</option>';
             renderEquipe.innerHTML = "";
-            
             barbeirosLocal.forEach(b => {
                 selectFolga.innerHTML += `<option value="${b.id}">${b.nome}</option>`;
                 selectFiltro.innerHTML += `<option value="${b.id}">${b.nome}</option>`;
@@ -302,20 +313,17 @@
         const nome = document.getElementById('b-nome').value;
         const servs = document.getElementById('b-servs').value;
         if(!nome) return alert("Digite o nome");
-        
         const dados = { nome, servicos: servs };
         if(id) await db.collection("barbeiros").doc(id).update(dados);
         else await db.collection("barbeiros").add(dados);
-        
         limparFormBarbeiro();
     }
 
-    // --- AGENDA E BLOQUEIOS ---
+    // --- AGENDA ---
     function carregarAgenda() {
         const filtroId = document.getElementById('filtro-barbeiro-agenda').value;
         let query = db.collection("agenda").orderBy("data", "asc");
         if (filtroId !== "todos") query = query.where("barbeiroId", "==", filtroId);
-        
         query.onSnapshot(snap => {
             const container = document.getElementById('render-agenda');
             container.innerHTML = snap.empty ? '<p style="text-align:center; padding:50px; color:gray;">Nenhum agendamento.</p>' : "";
@@ -331,10 +339,10 @@
         const data = document.getElementById('f-data').value;
         const tipo = document.getElementById('f-tipo').value;
         const hora = document.getElementById('f-hora-select').value;
-        if(!bId || !data) return alert("Preencha tudo");
+        if(!bId || !data) return alert("Preencha tudo"); 
         await db.collection("bloqueios").add({ barbeiroId: bId, data: data, hora: (tipo === "HORA_UNICA") ? hora : "DIA_TODO" });
         alert("Bloqueado!");
-    }
+    } 
 
     function carregarFolgas() { 
         db.collection("bloqueios").orderBy("data", "desc").limit(10).onSnapshot(snap => {   
@@ -348,7 +356,6 @@
         });
     }
 
-    // --- UTILITÁRIOS ---
     function switchTab(tab, el) {
         document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
         document.getElementById('tab-'+tab).style.display = 'block';
