@@ -60,7 +60,6 @@
         .btn-edit { color: var(--blue-action); font-size: 0.7rem; font-weight: 800; background: none; border: none; cursor: pointer; text-transform: uppercase; margin-right: 10px; }
         .btn-del { color: var(--danger); font-size: 0.7rem; font-weight: 800; background: none; border: none; cursor: pointer; text-transform: uppercase; }
         
-        /* Classes auxiliares para a agenda */
         .client-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
         .client-name { font-size: 1rem; font-weight: 800; }
         .badge-time { background: var(--primary); color: #000; padding: 4px 8px; border-radius: 8px; font-weight: 900; font-size: 0.7rem; }
@@ -104,7 +103,6 @@
             </div>
             <div id="render-agenda"></div>
         </div>
-
         <div id="tab-equipe" class="tab-content" style="display: none;">
             <div class="card">
                 <h3 id="titulo-editor-barbeiro" style="font-size: 0.8rem; margin-bottom: 15px; color: var(--primary);">CADASTRAR NOVO BARBEIRO</h3>
@@ -151,7 +149,6 @@
                 <p id="txt-restam" style="color:#fff; font-size: 0.85rem; margin-bottom:20px; font-weight: 500;">...</p>
                 <a href="https://mpago.la/1bCHsKA" target="_blank" class="btn-action">RENOVAR AGORA</a>
             </div>
-
             <div class="card">
                 <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px;">
                     <span style="font-size: 1.2rem;">💰</span>
@@ -218,18 +215,37 @@
 
     let barbeirosLocal = [];
 
-    // --- LOGIN ---
+    // --- NOVA FUNÇÃO: AUTO-DELETE APÓS 30 MINUTOS ---
+    async function limparAgendamentosAntigos() {
+        const agora = new Date();
+        const snap = await db.collection("agenda").get();
+        
+        snap.forEach(async (doc) => {
+            const ag = doc.data();
+            // ag.data no formato YYYY-MM-DD e ag.hora no formato HH:mm
+            const dataHoraAgendamento = new Date(`${ag.data}T${ag.hora}:00`);
+            
+            // Calcula a diferença em milissegundos
+            const diffMs = agora - dataHoraAgendamento;
+            const diffMinutos = diffMs / (1000 * 60);
+
+            // Se o horário atual for 30 minutos maior que o horário marcado, deleta
+            if (diffMinutos >= 30) {
+                await db.collection("agenda").doc(doc.id).delete();
+                console.log(`Removido agendamento de ${ag.cliente} por tempo expirado.`);
+            }
+        });
+    }
+
     async function fazerLogin() {
         const senhaDigitada = document.getElementById('senha-login').value;
         try {
             const segDoc = await db.collection("configuracao").doc("seguranca").get();
             const dadosSeg = segDoc.exists ? segDoc.data() : {};
-
             if(dadosSeg.master && senhaDigitada === dadosSeg.master) {
                 liberarInterface();
                 return;
             }
-
             const docAcesso = await db.collection("configuracao").doc("acesso").get();
             let senhaBarbeiro = "4321";
             if(docAcesso.exists) senhaBarbeiro = docAcesso.data().senha;
@@ -242,14 +258,12 @@
         } catch (e) { alert("Erro de conexão."); }
     }
 
-    // --- VALIDAÇÃO DE PAGAMENTO (ÚNICA E CORRIGIDA) ---
+    // --- FUNÇÕES DE PAGAMENTO, CONFIG E CORE ---
     async function verificarPagamentoManual() {
         const inputVal = document.getElementById('input-payment-id').value.trim();
         if (!inputVal) return alert("Insira o ID ou Código.");
-
         const btn = document.getElementById('btn-validar-mp');
         btn.innerText = "⌛ PROCESSANDO...";
-
         try {
             const segDoc = await db.collection("configuracao").doc("seguranca").get();
             if (segDoc.exists) {
@@ -259,19 +273,15 @@
                     return;
                 }
             }
-
             const TOKEN = "APP_USR-7975852504443105-010519-5d63f9d504313f8c5b9671f1f1090400-149806410";
             const res = await fetch(`https://api.mercadopago.com/v1/payments/${inputVal}`, {
                 headers: { 'Authorization': `Bearer ${TOKEN}` }
             });
             const data = await res.json();
-
             if (data.status === 'approved') {
                 await atualizarDataNoBanco(30, inputVal);
-            } else {
-                alert("⚠️ Pagamento não encontrado ou não aprovado.");
-            }
-        } catch (e) { alert("Erro de comunicação."); }
+            } else { alert("⚠️ Pagamento não encontrado."); }
+        } catch (e) { alert("Erro."); }
         finally { btn.innerText = "VALIDAR PAGAMENTO"; }
     }
 
@@ -281,18 +291,13 @@
         const doc = await docRef.get();
         const hoje = new Date();
         let novaData;
-
         if (doc.exists && doc.data().premiumAte) {
             const atual = doc.data().premiumAte.toDate();
             const base = atual > hoje ? atual : hoje;
             novaData = new Date(base.getTime() + dias * 24 * 60 * 60 * 1000);
-        } else {
-            novaData = new Date(hoje.getTime() + dias * 24 * 60 * 60 * 1000);
-        }
-
+        } else { novaData = new Date(hoje.getTime() + dias * 24 * 60 * 60 * 1000); }
         await docRef.set({ premiumAte: firebase.firestore.Timestamp.fromDate(novaData), status: "Ativo" }, {merge: true});
-        alert("✅ Plano renovado com sucesso!");
-        location.reload();
+        alert("✅ Renovado!"); location.reload();
     }
 
     function liberarInterface() {
@@ -301,29 +306,11 @@
         const hoje = new Date().toISOString().split('T')[0];
         document.getElementById('f-data').setAttribute('min', hoje);
         init();
+        limparAgendamentosAntigos(); // Limpa ao entrar
     }
 
-    // --- CONFIGS ---
-    async function salvarNovaSenha() {
-        const nv = document.getElementById('conf-nova-senha').value;
-        if(nv.length < 4) return alert("Senha muito curta.");
-        await db.collection("configuracao").doc("acesso").set({ senha: nv });
-        alert("✅ Senha alterada!");
-    }
-
-    async function salvarConfiguracoesBot() {
-        const token = document.getElementById('conf-telegram-token').value;
-        const chatId = document.getElementById('conf-telegram-chatid').value;
-        await db.collection("configuracao").doc("telegram").set({ token, chatId });
-        alert("✅ Telegram salvo!");
-    }
-
-    // --- CORE ---
     async function init() {
-        await carregarEquipe(); 
-        carregarAgenda();
-        carregarFolgas();
-        verificarAssinatura(); 
+        await carregarEquipe(); carregarAgenda(); carregarFolgas(); verificarAssinatura(); 
         const tg = await db.collection("configuracao").doc("telegram").get();
         if(tg.exists) {
             document.getElementById('conf-telegram-token').value = tg.data().token;
@@ -339,16 +326,13 @@
             dataLimite = new Date(); dataLimite.setDate(dataLimite.getDate()+30);
             await docRef.set({ premiumAte: firebase.firestore.Timestamp.fromDate(dataLimite), status: "Ativo" });
         } else dataLimite = doc.data().premiumAte.toDate();
-
         const resta = Math.ceil((dataLimite.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
         const txt = document.getElementById('txt-restam');
         if (resta <= 0) {
-            txt.innerHTML = `<span style="color:var(--danger)">⚠️ EXPIRADO EM ${dataLimite.toLocaleDateString()}</span>`;
+            txt.innerHTML = `<span style="color:var(--danger)">⚠️ EXPIRADO</span>`;
             document.querySelectorAll('.tab-content:not(#tab-premium)').forEach(c => c.style.display = 'none');
             switchTab('premium', document.querySelector('.tab-btn:last-child'));
-        } else {
-            txt.innerHTML = `STATUS: <span style="color:var(--success)">ATIVO</span> — Restam <b>${resta}</b> dias`;
-        }
+        } else { txt.innerHTML = `STATUS: <span style="color:var(--success)">ATIVO</span> — <b>${resta}</b> dias`; }
     }
 
     function switchTab(tab, el) {
@@ -358,9 +342,7 @@
         el.classList.add(tab === 'premium' ? 'premium-active' : 'active');
     }
 
-    function togglePass(id) {
-        const i = document.getElementById(id); i.type = i.type === "password" ? "text" : "password";
-    }
+    function togglePass(id) { const i = document.getElementById(id); i.type = i.type === "password" ? "text" : "password"; }
 
     function carregarAgenda() {
         const fId = document.getElementById('filtro-barbeiro-agenda').value;
@@ -397,7 +379,7 @@
         const id = document.getElementById('edit-id').value;
         const nome = document.getElementById('b-nome').value;
         const servs = document.getElementById('b-servs').value;
-        if(!nome) return alert("Digite o nome");
+        if(!nome) return alert("Nome?");
         if(id) await db.collection("barbeiros").doc(id).update({ nome, servicos: servs });
         else await db.collection("barbeiros").add({ nome, servicos: servs });
         limparFormBarbeiro();
@@ -408,7 +390,7 @@
         const data = document.getElementById('f-data').value;
         const tipo = document.getElementById('f-tipo').value;
         const hora = document.getElementById('f-hora-select').value;
-        if(!bId || !data) return alert("Preencha tudo");
+        if(!bId || !data) return alert("Campos!");
         await db.collection("bloqueios").add({ barbeiroId: bId, data, hora: (tipo === "HORA_UNICA") ? hora : "DIA_TODO" });
         alert("Bloqueado!");
     }
@@ -416,7 +398,7 @@
     function carregarFolgas() { 
         db.collection("bloqueios").orderBy("data", "desc").limit(10).onSnapshot(snap => {   
             const render = document.getElementById('render-folgas'); 
-            render.innerHTML = snap.empty ? "" : '<p style="margin:20px 0 10px; font-size:0.6rem; color:gray;">BLOQUEIOS RECENTES</p>';
+            render.innerHTML = snap.empty ? "" : '<p style="margin:20px 0 10px; font-size:0.6rem; color:gray;">BLOQUEIOS</p>';
             snap.docs.forEach(doc => {
                 const f = doc.data();
                 const b = barbeirosLocal.find(x => x.id === f.barbeiroId);
@@ -437,11 +419,11 @@
     }
     function limparFormBarbeiro() {
         document.getElementById('edit-id').value = ""; document.getElementById('b-nome').value = ""; document.getElementById('b-servs').value = "";
-        document.getElementById('titulo-editor-barbeiro').innerText = "CADASTRAR NOVO BARBEIRO";
-        document.getElementById('btn-salvar-barbeiro').innerText = "Adicionar Barbeiro";
+        document.getElementById('titulo-editor-barbeiro').innerText = "CADASTRAR";
+        document.getElementById('btn-salvar-barbeiro').innerText = "Adicionar";
         document.getElementById('btn-cancelar-edit').style.display = "none";
     }
-    async function excluir(col, id) { if(confirm("Deseja realizar esta ação?")) await db.collection(col).doc(id).delete(); }
+    async function excluir(col, id) { if(confirm("Confirmar?")) await db.collection(col).doc(id).delete(); }
 </script>
 
 </body>
