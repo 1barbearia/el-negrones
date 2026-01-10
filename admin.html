@@ -155,7 +155,7 @@
 </div>
 
 <script>
-    const firebaseConfig = { 
+   const firebaseConfig = { 
         apiKey: "AIzaSyC0x8q1N7R70BYhfd2daedBjRKH0qupJiI",
         authDomain: "elnes-720ce.firebaseapp.com",
         projectId: "elnes-720ce",
@@ -183,31 +183,29 @@
         carregarAgenda();
         carregarFolgas();
         verificarAssinatura(); 
-        carregarDadosBot(); // Carrega o Token e ChatID salvos
+        carregarDadosBot(); 
     }
 
-    // --- NOVA FUNÇÃO: CARREGAR DADOS DO BOT ---
-    // --- FUNÇÃO CARREGAR DADOS DO BOT (COM MÁSCARA) ---
+    // --- CONFIGURAÇÃO DO BOT TELEGRAM ---
     async function carregarDadosBot() {
         const doc = await db.collection("configuracao").doc("telegram").get();
         if(doc.exists) {
             const campoToken = document.getElementById('conf-telegram-token');
             const campoChatId = document.getElementById('conf-telegram-chatid');
             
-            // Define o valor e bloqueia os campos
             campoToken.value = "********"; 
             campoChatId.value = "********";
             campoToken.disabled = true;
             campoChatId.disabled = true;
 
-            // Altera o botão para modo "Editar" se já houver dados
             const btn = document.querySelector("button[onclick='salvarConfiguracoesBot()']");
-            btn.innerText = "Editar Configurações";
-            btn.setAttribute("onclick", "liberarEdicaoBot(this)");
+            if(btn) {
+                btn.innerText = "Editar Configurações";
+                btn.setAttribute("onclick", "liberarEdicaoBot(this)");
+            }
         }
     }
 
-    // --- FUNÇÃO PARA LIBERAR OS CAMPOS ---
     function liberarEdicaoBot(btn) {
         const campoToken = document.getElementById('conf-telegram-token');
         const campoChatId = document.getElementById('conf-telegram-chatid');
@@ -223,45 +221,36 @@
         btn.setAttribute("onclick", "salvarConfiguracoesBot()");
     }
 
-    // --- FUNÇÃO SALVAR DADOS DO BOT (BLOQUEIA APÓS SALVAR) ---
     async function salvarConfiguracoesBot() {
         const token = document.getElementById('conf-telegram-token').value;
         const chatId = document.getElementById('conf-telegram-chatid').value;
         
-        if(!token || !chatId || token === "********") return alert("Insira dados válidos!");
+        if(!token || !chatId || token === "********") {
+            return alert("Por favor, preencha o Token e o Chat ID corretamente.");
+        }
         
-        await db.collection("configuracao").doc("telegram").set({
-            token: token,
-            chatId: chatId,
-            atualizadoEm: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        
-        alert("Configurações de notificação salvas!");
-        carregarDadosBot(); // Bloqueia e esconde os dados novamente
+        try {
+            await db.collection("configuracao").doc("telegram").set({
+                token: token,
+                chatId: chatId,
+                atualizadoEm: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            
+            alert("✅ Configurações salvas! O Bot já pode enviar notificações.");
+            carregarDadosBot(); 
+        } catch (e) {
+            alert("Erro ao salvar: " + e.message);
+        }
     }
 
-    // --- NOVA FUNÇÃO: SALVAR DADOS DO BOT ---
-    async function salvarConfiguracoesBot() {
-        const token = document.getElementById('conf-telegram-token').value;
-        const chatId = document.getElementById('conf-telegram-chatid').value;
-        
-        await db.collection("configuracao").doc("telegram").set({
-            token: token,
-            chatId: chatId,
-            atualizadoEm: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        alert("Configurações de notificação salvas!");
-    }
-
+    // --- GESTÃO DE ASSINATURA ---
     async function verificarAssinatura() {
         const docRef = db.collection("configuracao").doc("assinatura");
         const doc = await docRef.get();
         let dataLimite;
-        let dataInstalacao;
 
         if(!doc.exists) {
             const hoje = new Date();
-            dataInstalacao = hoje;
             dataLimite = new Date();
             dataLimite.setDate(hoje.getDate() + 30);
             await docRef.set({
@@ -271,73 +260,62 @@
             });
         } else {
             const dados = doc.data();
-            dataInstalacao = dados.dataInstalacao.toDate();
-            if (dados.premiumAte) {
-                dataLimite = dados.premiumAte.toDate();
-            } else {
-                dataLimite = new Date(dataInstalacao);
-                dataLimite.setDate(dataInstalacao.getDate() + 30);
-            }
+            const dataInstalacao = dados.dataInstalacao.toDate();
+            dataLimite = dados.premiumAte ? dados.premiumAte.toDate() : new Date(dataInstalacao.getTime() + 30 * 24 * 60 * 60 * 1000);
         }
 
         const hoje = new Date();
         const resta = Math.ceil((dataLimite - hoje) / (1000 * 60 * 60 * 24));
-        const statusAtual = doc.exists ? (doc.data().status || "Ativo") : "Ativo";
         const vencimentoFormatado = dataLimite.toLocaleDateString('pt-BR');
 
         if (resta <= 0) {
-            document.body.innerHTML = `
-                <div style="height:100vh; background:#050505; color:white; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; font-family:'Inter', sans-serif; padding:30px;">
-                    <div style="font-size: 5rem; margin-bottom: 20px;">🔒</div>
-                    <h1 style="color:var(--primary); font-weight:900; letter-spacing:2px;">ASSINATURA EXPIRADA</h1>
-                    <p style="color:#a0a0a0; max-width:350px; margin: 15px 0 30px 0; line-height:1.6;">Seu período de uso expirou em ${vencimentoFormatado}.</p>
-                    <a href="https://mpago.la/1bCHsKA" target="_blank" style="background:var(--grad); color:black; padding:20px 40px; border-radius:15px; text-decoration:none; font-weight:900; width:100%; max-width:300px;">RENOVAR AGORA</a>
-                </div>`;
+            document.body.innerHTML = `<div style="height:100vh; background:#050505; color:white; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:30px;"><h1>ASSINATURA EXPIRADA</h1><p>Venceu em ${vencimentoFormatado}</p><a href="https://mpago.la/1bCHsKA" style="background:var(--grad); padding:20px; color:black; text-decoration:none; font-weight:bold; border-radius:10px;">RENOVAR</a></div>`;
             return false;
         } else {
-            document.getElementById('txt-restam').innerHTML = `
-                <span style="color:var(--success); font-weight:800; display:block; margin-bottom:5px; font-size:1.1rem;">STATUS: ${statusAtual.toUpperCase()}</span>
-                <span style="color:var(--text-dim); display:block; margin-bottom:10px;">Vencimento: ${vencimentoFormatado}</span>
-                Liberação por mais ${resta} dias.`;
+            document.getElementById('txt-restam').innerHTML = `STATUS: ATIVO<br>Vencimento: ${vencimentoFormatado}<br>Restam ${resta} dias.`;
             return true;
         }
     }
 
+    // --- GESTÃO DE EQUIPE ---
     async function carregarEquipe() {
         db.collection("barbeiros").onSnapshot(snap => {
             barbeirosLocal = snap.docs.map(doc => ({id: doc.id, ...doc.data()}));
             const selectFolga = document.getElementById('f-barbeiro');
             const selectFiltro = document.getElementById('filtro-barbeiro-agenda');
             const renderEquipe = document.getElementById('render-equipe');
+            
             selectFolga.innerHTML = '<option value="">Escolha...</option>';
             selectFiltro.innerHTML = '<option value="todos">📅 Mostrar Todos</option>';
             renderEquipe.innerHTML = "";
+            
             barbeirosLocal.forEach(b => {
                 selectFolga.innerHTML += `<option value="${b.id}">${b.nome}</option>`;
                 selectFiltro.innerHTML += `<option value="${b.id}">${b.nome}</option>`;
-                renderEquipe.innerHTML += `<div class="item-list"><div style="flex:1"><b>${b.nome}</b></div><button class="btn-edit" onclick="prepararEdicao('${b.id}')">Editar</button><button class="btn-del" onclick="excluir('barbeiros', '${b.id}')">Remover</button></div>`;
+                renderEquipe.innerHTML += `<div class="item-list"><b>${b.nome}</b><div><button class="btn-edit" onclick="prepararEdicao('${b.id}')">Editar</button><button class="btn-del" onclick="excluir('barbeiros', '${b.id}')">Remover</button></div></div>`;
             });
         });
     }
 
     async function salvarBarbeiro() {
-        const ativo = await verificarAssinatura();
-        if(!ativo) return;
         const id = document.getElementById('edit-id').value;
         const nome = document.getElementById('b-nome').value;
         const servs = document.getElementById('b-servs').value;
         if(!nome) return alert("Digite o nome");
+        
         const dados = { nome, servicos: servs };
         if(id) await db.collection("barbeiros").doc(id).update(dados);
         else await db.collection("barbeiros").add(dados);
+        
         limparFormBarbeiro();
-        alert("Sucesso!");
     }
 
+    // --- AGENDA E BLOQUEIOS ---
     function carregarAgenda() {
         const filtroId = document.getElementById('filtro-barbeiro-agenda').value;
         let query = db.collection("agenda").orderBy("data", "asc");
         if (filtroId !== "todos") query = query.where("barbeiroId", "==", filtroId);
+        
         query.onSnapshot(snap => {
             const container = document.getElementById('render-agenda');
             container.innerHTML = snap.empty ? '<p style="text-align:center; padding:50px; color:gray;">Nenhum agendamento.</p>' : "";
@@ -365,21 +343,21 @@
             snap.docs.forEach(doc => {
                 const f = doc.data();
                 const b = barbeirosLocal.find(x => x.id === f.barbeiroId);
-                render.innerHTML += `<div class="item-list" style="font-size:0.8rem"><span>${b?.nome} - ${f.data}</span><button class="btn-del" onclick="excluir('bloqueios', '${doc.id}')">Remover</button></div>`;
+                render.innerHTML += `<div class="item-list"><span>${b?.nome} - ${f.data.split('-').reverse().join('/')} (${f.hora})</span><button class="btn-del" onclick="excluir('bloqueios', '${doc.id}')">Remover</button></div>`;
             });
         });
     }
 
+    // --- UTILITÁRIOS ---
     function switchTab(tab, el) {
         document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
         document.getElementById('tab-'+tab).style.display = 'block';
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active', 'premium-active'));
-        if(tab === 'premium') el.classList.add('premium-active'); else el.classList.add('active');
+        el.classList.add(tab === 'premium' ? 'premium-active' : 'active');
     }
 
     function toggleHoraInput() {
-        const tipo = document.getElementById('f-tipo').value;
-        document.getElementById('box-hora-especifica').style.display = tipo === 'HORA_UNICA' ? 'block' : 'none';
+        document.getElementById('box-hora-especifica').style.display = document.getElementById('f-tipo').value === 'HORA_UNICA' ? 'block' : 'none';
     }
 
     function prepararEdicao(id) {
@@ -402,7 +380,7 @@
     }
 
     async function excluir(col, id) { 
-        if(confirm("Deseja realmente excluir/concluir?")) await db.collection(col).doc(id).delete(); 
+        if(confirm("Deseja realizar esta ação?")) await db.collection(col).doc(id).delete(); 
     }
 </script>
 
