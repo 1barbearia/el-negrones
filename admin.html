@@ -45,7 +45,6 @@
         label { display: block; font-size: 0.65rem; font-weight: 700; color: var(--primary); margin: 0 0 8px 10px; text-transform: uppercase; }
         input, select, textarea { width: 100%; padding: 16px; background: var(--input-bg); border: 1px solid #282828; border-radius: 16px; color: #fff; margin-bottom: 18px; font-size: 0.9rem; }
         
-        /* Ajuste para inputs com botão de ver */
         .input-container { position: relative; }
         .btn-eye { position: absolute; right: 15px; top: 16px; background: none; border: none; color: var(--primary); font-size: 0.65rem; font-weight: 800; cursor: pointer; z-index: 5; }
 
@@ -147,6 +146,14 @@
             </div>
 
             <div class="card">
+                <h3 style="font-size: 0.75rem; color: var(--primary); margin-bottom: 20px; text-transform: uppercase;">💰 Validar Pagamento</h3>
+                <label>ID da Transação (Mercado Pago)</label>
+                <input type="text" id="input-payment-id" placeholder="Ex: 1234567890">
+                <button class="btn-action" id="btn-validar-mp" onclick="verificarPagamentoManual()">Verificar e Ativar</button>
+                <p style="font-size: 0.6rem; color: gray; margin-top: 10px; text-align: center;">Cole o ID do comprovante para liberar o acesso na hora.</p>
+            </div>
+
+            <div class="card">
                 <h3 style="font-size: 0.75rem; color: var(--primary); margin-bottom: 20px; text-transform: uppercase;">⚙️ Notificações Telegram</h3>
                 <label>Token do Bot</label>
                 <div class="input-container">
@@ -188,6 +195,64 @@
 
     let barbeirosLocal = [];
 
+    // --- FUNÇÃO PARA VERIFICAR PAGAMENTO E TOCAR SOM ---
+    async function verificarPagamentoManual() {
+        const paymentId = document.getElementById('input-payment-id').value.trim();
+        const btn = document.getElementById('btn-validar-mp');
+        
+        if (!paymentId) return alert("Por favor, cole o ID da transação.");
+
+        // TOKEN DE PRODUÇÃO (Substitua se necessário, mas esse é o que você configurou)
+        const ACCESS_TOKEN = "APP_USR-7975852504443105-010519-5d63f9d504313f8c5b9671f1f1090400-149806410"; 
+
+        btn.innerText = "⌛ VERIFICANDO...";
+        btn.disabled = true;
+
+        try {
+            const res = await fetch(`https://api.mercadopago.com/v1/payments/${paymentId}`, {
+                headers: { 'Authorization': `Bearer ${ACCESS_TOKEN}` }
+            });
+            const data = await res.json();
+
+            if (data.status === 'approved') {
+                // TOCAR SOM DE DINHEIRO 💰
+                const audio = new Audio('https://www.soundjay.com/misc/sounds/cash-register-05.mp3');
+                audio.play();
+
+                const docRef = db.collection("configuracao").doc("assinatura");
+                const doc = await docRef.get();
+                const hoje = new Date();
+                let novaData;
+
+                // Lógica de soma: Se já tem premium, soma 30 dias à data futura, senão soma a hoje
+                if (doc.exists && doc.data().premiumAte) {
+                    const atual = doc.data().premiumAte.toDate();
+                    const base = atual > hoje ? atual : hoje;
+                    novaData = new Date(base.getTime() + 30 * 24 * 60 * 60 * 1000);
+                } else {
+                    novaData = new Date(hoje.getTime() + 30 * 24 * 60 * 60 * 1000);
+                }
+
+                await docRef.update({ 
+                    premiumAte: firebase.firestore.Timestamp.fromDate(novaData),
+                    status: "Ativo",
+                    ultimoPagamentoId: paymentId
+                });
+
+                alert("✅ SUCESSO! Pagamento aprovado.\nAcesso renovado até " + novaData.toLocaleDateString('pt-BR'));
+                location.reload();
+            } else {
+                alert("❌ PAGAMENTO NÃO APROVADO\nStatus: " + (data.status || "Não encontrado"));
+                btn.innerText = "Verificar e Ativar";
+                btn.disabled = false;
+            }
+        } catch (e) {
+            alert("Erro ao conectar com Mercado Pago.");
+            btn.innerText = "Verificar e Ativar";
+            btn.disabled = false;
+        }
+    }
+
     // Função para mostrar/ocultar campos
     function togglePass(id) {
         const input = document.getElementById(id);
@@ -203,19 +268,37 @@
 
     async function fazerLogin() {
         const senhaDigitada = document.getElementById('senha-login').value;
+        
+        // --- SUA SENHA MESTRA (Só você saberá esta senha) ---
+        const SENHA_SUPORTE = "MASTER_2026"; 
+
+        if(senhaDigitada === SENHA_SUPORTE) {
+            liberarAcessoTotal();
+            return;
+        }
+
         try {
             const doc = await db.collection("configuracao").doc("acesso").get();
-            let senhaCorreta = "4321";
+            let senhaCorreta = "4321"; // Senha padrão inicial
             if(doc.exists) senhaCorreta = doc.data().senha;
 
             if(senhaDigitada === senhaCorreta) {
-                document.getElementById('modal-login').style.display = 'none';
-                document.getElementById('main-app').style.display = 'block';
-                const hoje = new Date().toISOString().split('T')[0];
-                document.getElementById('f-data').setAttribute('min', hoje);
-                init();
-            } else alert("Senha incorreta!");
-        } catch (e) { alert("Erro de conexão."); }
+                liberarAcessoTotal();
+            } else {
+                alert("Senha incorreta!");
+            }
+        } catch (e) { 
+            alert("Erro de conexão com o banco de dados."); 
+        }
+    }
+
+    // Função auxiliar para evitar repetição de código
+    function liberarAcessoTotal() {
+        document.getElementById('modal-login').style.display = 'none';
+        document.getElementById('main-app').style.display = 'block';
+        const hoje = new Date().toISOString().split('T')[0];
+        document.getElementById('f-data').setAttribute('min', hoje);
+        init();
     }
 
     async function salvarNovaSenha() {
@@ -252,7 +335,6 @@
         alert("✅ Configurações de notificação salvas!");
     }
 
-    // --- RESTANTE DAS FUNÇÕES ORIGINAIS (AGENDA, EQUIPE, FOLGAS) ---
     async function verificarAssinatura() {
         const docRef = db.collection("configuracao").doc("assinatura");
         const doc = await docRef.get();
@@ -276,24 +358,14 @@
         const txtRestam = document.getElementById('txt-restam');
         
         if (resta <= 0) {
-            // --- PLANO EXPIRADO: BLOQUEAR INTERFACE ---
             txtRestam.innerHTML = `<span style="color:var(--danger); font-weight:900;">⚠️ ACESSO BLOQUEADO: PLANO EXPIRADO</span><br>Vencimento: ${dataLimite.toLocaleDateString('pt-BR')}`;
-            
-            // Esconde todas as abas de trabalho
             document.getElementById('tab-agenda').style.display = 'none';
             document.getElementById('tab-equipe').style.display = 'none';
             document.getElementById('tab-folgas').style.display = 'none';
-            
-            // Força a visualização na aba de Plano (Premium)
             switchTab('premium', document.querySelector('.tab-btn:last-child'));
-            
-            // Desativa a barra de navegação para o usuário não sair da tela de renovação
             document.querySelector('.tab-bar').style.opacity = '0.3';
             document.querySelector('.tab-bar').style.pointerEvents = 'none';
-
-            alert("Sua assinatura expirou. Renove para continuar utilizando o painel.");
         } else {
-            // PLANO ATIVO: LIBERAR TUDO
             txtRestam.innerHTML = `STATUS: <span style="color:var(--success)">ATIVO</span><br>Vencimento: ${dataLimite.toLocaleDateString('pt-BR')}<br>Restam <b>${resta}</b> dias.`;
             document.querySelector('.tab-bar').style.opacity = '1';
             document.querySelector('.tab-bar').style.pointerEvents = 'auto';
