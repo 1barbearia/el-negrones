@@ -174,33 +174,49 @@
         sS.innerHTML = '<option value="">Selecione o Serviço</option>';
         if(b && b.servicos) b.servicos.split('\n').forEach(s => { if(s.trim()) sS.innerHTML += `<option>${s.trim()}</option>`; });
         carregarDatasPermitidas();
-    }
+    } 
 
     async function carregarDatasPermitidas() {
-        const render = document.getElementById('render-datas');
-        const bId = document.getElementById("select-barbeiro").value;
-        if(!bId) return;
+    const render = document.getElementById('render-datas');
+    const bId = document.getElementById("select-barbeiro").value;
+    if(!bId) return;
 
-        render.innerHTML = "<p style='font-size:0.7rem; color:var(--primary)'>Buscando datas...</p>";
+    render.innerHTML = "<p style='font-size:0.7rem; color:var(--primary)'>Buscando datas...</p>";
 
-        const confCal = await db.collection("configuracao").doc("calendario").get();
-        const confDias = await db.collection("configuracao").doc("funcionamento").get();
+    try {
+        const [confCal, confDias] = await Promise.all([
+            db.collection("configuracao").doc("calendario").get(),
+            db.collection("configuracao").doc("funcionamento").get()
+        ]);
         
-        const semanasLimite = confCal.exists ? parseInt(confCal.data().semanasLimite) : 1;
-        const diasAtivos = confDias.exists ? confDias.data().diasAtivos : [1,2,3,4,5,6];
-        const limiteDeDias = semanasLimite * 7;
+        // Pega o limite de semanas do Admin (ex: 1 ou 2)
+        let semanasLimite = confCal.exists ? parseInt(confCal.data().semanasLimite) : 1;
+        // Pega os dias que você marcou que trabalha (ex: [1,2,3,4,5])
+        let diasAtivos = confDias.exists ? confDias.data().diasAtivos : [1,2,3,4,5,6];
 
-        render.innerHTML = "";
+        render.innerHTML = ""; 
         const diasSemana = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
 
-        for (let i = 0; i < limiteDeDias; i++) {
+        const hoje = new Date();
+        const diaDaSemanaAtual = hoje.getDay(); 
+
+        // ESTA É A TRAVA REAL:
+        // Calculamos quantos dias faltam para chegar no Sábado da semana limite.
+        // Se semanasLimite for 1, ele só vai até o sábado desta semana.
+        // Se hoje é terça (2), faltam 4 dias para o sábado (6-2=4).
+        const limiteDeDiasNoLoop = (6 - diaDaSemanaAtual) + ((semanasLimite - 1) * 7);
+
+        for (let i = 0; i <= limiteDeDiasNoLoop; i++) {
             let d = new Date();
-            d.setDate(d.getDate() + i);
+            d.setDate(hoje.getDate() + i);
+            
+            // Só renderiza se o dia da semana estiver marcado como ativo no Admin
             if (diasAtivos.includes(d.getDay())) {
                 const dataIso = d.toISOString().split('T')[0];
                 const card = document.createElement('div');
                 card.className = 'card-data';
                 card.innerHTML = `<span>${diasSemana[d.getDay()]}</span><span>${d.getDate()}</span>`;
+                
                 card.onclick = () => {
                     playClick();
                     document.querySelectorAll('.card-data').forEach(c => c.classList.remove('selecionada'));
@@ -211,7 +227,16 @@
                 render.appendChild(card);
             }
         }
+
+        if(render.innerHTML === "") {
+            render.innerHTML = "<p style='font-size:0.7rem; color:gray;'>Agenda encerrada para esta semana.</p>";
+        }
+
+    } catch (error) {
+        console.error("Erro:", error);
+        render.innerHTML = "<p style='font-size:0.7rem; color:red;'>Erro ao carregar datas.</p>";
     }
+}
 
     async function gerarHorarios() {
         const dataSel = document.getElementById("data-agenda").value;
