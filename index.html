@@ -23,50 +23,66 @@
         .header p { font-size: 0.7rem; letter-spacing: 5px; color: var(--text-dim); text-transform: uppercase; margin-top: 5px; }
 
         .card { background: var(--card); padding: 25px; border-radius: 35px; border: 1px solid #222; }
-        label { font-size: 0.7rem; color: var(--primary); font-weight: 800; text-transform: uppercase; margin: 0 0 8px 10px; display: block; }
+        label { font-size: 0.7rem; color: var(--primary); font-weight: 800; text-transform: uppercase; margin: 15px 0 8px 10px; display: block; }
         input, select { width: 100%; padding: 18px; margin-bottom: 20px; border-radius: 20px; border: 1px solid #282828; background: var(--input-bg); color: #fff; font-size: 1rem; }
 
-        .datas-wrapper { display: flex; gap: 10px; overflow-x: auto; padding: 10px 5px; margin-bottom: 20px; scrollbar-width: none; }
-        .datas-wrapper::-webkit-scrollbar { display: none; }
-        .card-data { 
-            min-width: 75px; background: #1a1a1a; padding: 15px 10px; border-radius: 20px; 
-            border: 1px solid #252525; text-align: center; cursor: pointer; transition: 0.3s;
-            display: flex; flex-direction: column; gap: 5px;
+        /* DESIGN DOS CARDS DE DATA RECURADO */
+        .datas-wrapper { 
+            display: flex; 
+            gap: 12px; 
+            overflow-x: auto; 
+            padding: 15px 5px; 
+            margin-bottom: 20px; 
+            scrollbar-width: none; 
+            -ms-overflow-style: none;
+            scroll-snap-type: x mandatory;
         }
-        .card-data span:first-child { font-size: 0.6rem; text-transform: uppercase; color: var(--text-dim); font-weight: 800; }
+        .datas-wrapper::-webkit-scrollbar { display: none; }
+        
+        .card-data { 
+            min-width: 75px; 
+            background: #1a1a1a; 
+            padding: 18px 10px; 
+            border-radius: 22px; 
+            border: 1px solid #252525; 
+            text-align: center; 
+            cursor: pointer; 
+            transition: 0.3s;
+            display: flex; 
+            flex-direction: column; 
+            gap: 5px;
+            flex-shrink: 0; /* Impede de esmagar */
+            scroll-snap-align: start;
+        }
+        .card-data span:first-child { font-size: 0.65rem; text-transform: uppercase; color: var(--text-dim); font-weight: 800; }
         .card-data span:last-child { font-size: 1.2rem; font-weight: 900; color: #fff; }
-        .card-data.selecionada { background: var(--grad); border: none; transform: scale(1.05); }
+        
+        .card-data.selecionada { background: var(--grad); border: none; transform: scale(1.05); box-shadow: 0 10px 20px rgba(197, 160, 89, 0.2); }
         .card-data.selecionada span { color: #000 !important; }
 
+        /* GRID DE HORÁRIOS RECURADO */
         .horarios-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 25px; }
-        .hora-btn { background: #1a1a1a; padding: 15px 5px; text-align: center; border-radius: 18px; border: 1px solid #252525; cursor: pointer; color: var(--text-dim); font-weight: 600; }
-        .hora-btn.selecionada { background: var(--grad); color: #000; font-weight: 800; border: none; }
+        .hora-btn { background: #1a1a1a; padding: 15px 5px; text-align: center; border-radius: 18px; border: 1px solid #252525; cursor: pointer; color: var(--text-dim); font-weight: 600; transition: 0.2s; }
+        .hora-btn.selecionada { background: var(--grad); color: #000; font-weight: 800; border: none; transform: scale(1.05); }
         .hora-btn.ocupada { background: #111; opacity: 0.2; color: #444; cursor: not-allowed; }
 
-        .btn-principal { width: 100%; padding: 22px; border-radius: 22px; background: var(--grad); color: #000; font-weight: 900; border: none; cursor: pointer; text-transform: uppercase; font-size: 1rem; }
+        .btn-principal { width: 100%; padding: 22px; border-radius: 22px; background: var(--grad); color: #000; font-weight: 900; border: none; cursor: pointer; text-transform: uppercase; font-size: 1rem; box-shadow: 0 10px 20px rgba(197, 160, 89, 0.2); }
+        
         #modal-sucesso { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 10000; align-items: center; justify-content: center; padding: 20px; }
         .success-card { background: var(--card); padding: 40px 30px; border-radius: 40px; border: 1px solid var(--primary); text-align: center; max-width: 350px; }
-        #bloqueio-total { display: none; position: fixed; inset: 0; background: #050505; z-index: 9999; align-items: center; justify-content: center; text-align: center; }
     </style>
 </head>
 <body>
 
-<audio id="snd-click" src="https://www.soundjay.com/buttons/sounds/button-16.mp3"></audio>
-<audio id="snd-success" src="https://www.soundjay.com/buttons/sounds/button-09.mp3"></audio>
-
 <div id="modal-sucesso">
     <div class="success-card">
-        <h2 style="color:var(--primary); font-family:'Cinzel', serif;">RESERVA FEITA!</h2>
-        <p style="color:var(--text-dim); margin-bottom: 25px;">Seu horário foi agendado com sucesso.</p>
+        <h2 style="color:var(--primary); font-family:'Cinzel', serif; font-size: 1.8rem;">RESERVA FEITA!</h2>
+        <p style="color:var(--text-dim); margin-bottom: 25px;">Seu estilo está garantido.</p>
         <button class="btn-principal" onclick="location.reload()">Sair</button>
     </div>
 </div>
 
-<div id="bloqueio-total">
-    <h2 style="color: #fff;">SISTEMA EM MANUTENÇÃO</h2>
-</div>
-
-<div class="container" id="app-content">
+<div class="container">
     <div class="header">
         <img src="logo_insta.png" alt="Logo" class="logo-img">
         <p>Criando seu estilo</p>
@@ -74,18 +90,18 @@
 
     <div class="card">
         <label>Quem vai cuidar do seu estilo?</label>
-        <select id="select-barbeiro" onchange="playClick(); atualizarServicos()">
+        <select id="select-barbeiro" onchange="atualizarServicos()">
             <option value="">Carregando profissionais...</option>
         </select>
         
         <label>O que vamos fazer hoje?</label>
-        <select id="select-servico" onchange="playClick()">
+        <select id="select-servico">
             <option value="">Escolha o profissional primeiro</option>
         </select>
         
-        <label>Escolha o dia</label>
+        <label>Escolha o dia (Arraste 👉)</label>
         <div class="datas-wrapper" id="render-datas">
-            <p style="font-size: 0.7rem; color: gray;">Selecione o profissional primeiro</p>
+            <p style="font-size: 0.75rem; color: #555; padding: 10px;">Aguardando profissional...</p>
         </div>
         <input type="hidden" id="data-agenda">
         
@@ -93,10 +109,10 @@
         <div class="horarios-grid" id="grid-horarios"></div>
         
         <label>Seu Nome</label>
-        <input type="text" id="nome-cliente" placeholder="Seu nome completo">
+        <input type="text" id="nome-cliente" placeholder="Como podemos te chamar?">
         
         <label>WhatsApp</label>
-        <input type="tel" id="whatsapp-cliente" placeholder="(00) 00000-0000" oninput="maskWhatsApp(this)">
+        <input type="tel" id="whatsapp-cliente" placeholder="(00) 00000-0000">
         
         <button class="btn-principal" id="btn-confirmar" onclick="confirmarAgendamento()">Finalizar Agendamento</button>
     </div>
@@ -116,49 +132,8 @@
     
     let barbeirosData = [];
     let horarioSelecionado = null;
-    let configGeral = { semanas: 1, diasAtivos: [1,2,3,4,5,6], botToken: "", chatId: "" };
 
-    const horasBase = ["09:00","09:30","10:00","10:30","11:00","11:30","12:00","12:30","13:00","13:30","14:00","14:30","15:00","15:30","16:00","16:30","17:00","17:30","18:00","18:30","19:00","19:30"];
-
-    function playClick() { document.getElementById('snd-click').play().catch(()=>{}); }
-    function playSuccess() { document.getElementById('snd-success').play().catch(()=>{}); }
-
-    function maskWhatsApp(i) {
-        let v = i.value.replace(/\D/g,'');
-        if(v.length > 11) v = v.substring(0,11);
-        if(v.length > 10) v = v.replace(/^(\d{2})(\d{5})(\d{4})/, "($1) $2-$3");
-        else if(v.length > 5) v = v.replace(/^(\d{2})(\d{4})(\d{0,4})/, "($1) $2-$3");
-        else if(v.length > 2) v = v.replace(/^(\d{2})(\d{0,5})/, "($1) $2");
-        i.value = v;
-    }
-
-    window.onload = async () => {
-        await carregarConfiguracoesBase();
-        carregarBarbeiros();
-    };
-
-    async function carregarConfiguracoesBase() {
-        try {
-            const [cCal, cDias, cTele, cAssin] = await Promise.all([
-                db.collection("configuracao").doc("calendario").get(),
-                db.collection("configuracao").doc("funcionamento").get(),
-                db.collection("configuracao").doc("telegram").get(),
-                db.collection("configuracao").doc("assinatura").get()
-            ]);
-
-            if(cAssin.exists && new Date() > cAssin.data().premiumAte.toDate()) {
-                document.getElementById('bloqueio-total').style.display = 'flex';
-                document.getElementById('app-content').style.display = 'none';
-            }
-
-            if(cCal.exists) configGeral.semanas = cCal.data().semanasLimite || 1;
-            if(cDias.exists) configGeral.diasAtivos = cDias.data().diasAtivos || [1,2,3,4,5,6];
-            if(cTele.exists) {
-                configGeral.botToken = cTele.data().token;
-                configGeral.chatId = cTele.data().chatId;
-            }
-        } catch(e) { console.error("Erro config:", e); }
-    }
+    window.onload = () => carregarBarbeiros();
 
     async function carregarBarbeiros() {
         const snap = await db.collection("barbeiros").get();
@@ -169,121 +144,93 @@
     }
 
     function atualizarServicos() {
-        const b = barbeirosData.find(x => x.id === document.getElementById("select-barbeiro").value);
+        const bId = document.getElementById("select-barbeiro").value;
+        const b = barbeirosData.find(x => x.id === bId);
         const sS = document.getElementById("select-servico");
         sS.innerHTML = '<option value="">Selecione o Serviço</option>';
         if(b && b.servicos) b.servicos.split('\n').forEach(s => { if(s.trim()) sS.innerHTML += `<option>${s.trim()}</option>`; });
-        carregarDatasPermitidas();
+        renderizarDatasPremium();
     } 
 
-    function carregarDatasPermitidas() {
+    async function renderizarDatasPremium() {
         const render = document.getElementById('render-datas');
-        const bId = document.getElementById("select-barbeiro").value;
-        if(!bId) return;
+        render.innerHTML = "<p style='font-size:0.7rem; color:var(--primary); padding:10px;'>Buscando agenda...</p>";
 
-        render.innerHTML = "";
-        const diasSemanaNomes = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
-        const hoje = new Date();
-        hoje.setHours(0,0,0,0);
-
-        const totalDias = configGeral.semanas * 7;
-
-        for (let i = 0; i < totalDias; i++) {
-            let d = new Date(hoje);
-            d.setDate(hoje.getDate() + i);
+        try {
+            const confCal = await db.collection("configuracao").doc("calendario").get({source: 'server'});
+            const confDias = await db.collection("configuracao").doc("funcionamento").get({source: 'server'});
             
-            if (configGeral.diasAtivos.includes(d.getDay())) {
-                const dataFormatada = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+            let semanasLimite = 1;
+            if(confCal.exists) semanasLimite = parseInt(confCal.data().semanasLimite || 1);
+
+            let diasAtivos = confDias.exists ? confDias.data().diasAtivos : [1,2,3,4,5,6];
+
+            render.innerHTML = ""; 
+            const diasSemanaNomes = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+            const hoje = new Date();
+            hoje.setHours(0,0,0,0);
+
+            const totalDias = semanasLimite * 7;
+
+            for (let i = 0; i < totalDias; i++) {
+                let d = new Date(hoje);
+                d.setDate(hoje.getDate() + i);
                 
-                const card = document.createElement('div');
-                card.className = 'card-data';
-                card.innerHTML = `<span>${diasSemanaNomes[d.getDay()]}</span><span>${d.getDate()}</span>`;
-                card.onclick = () => {
-                    playClick();
-                    document.querySelectorAll('.card-data').forEach(c => c.classList.remove('selecionada'));
-                    card.classList.add('selecionada');
-                    document.getElementById('data-agenda').value = dataFormatada;
-                    gerarHorarios();
-                };
-                render.appendChild(card);
+                if (diasAtivos.includes(d.getDay())) {
+                    const dataFormatada = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                    const card = document.createElement('div');
+                    card.className = 'card-data';
+                    card.innerHTML = `<span>${diasSemanaNomes[d.getDay()]}</span><span>${d.getDate()}</span>`;
+                    
+                    card.onclick = () => {
+                        document.querySelectorAll('.card-data').forEach(c => c.classList.remove('selecionada'));
+                        card.classList.add('selecionada');
+                        document.getElementById('data-agenda').value = dataFormatada;
+                        carregarHorariosPremium(dataFormatada);
+                    };
+                    render.appendChild(card);
+                }
             }
-        }
+        } catch (error) { render.innerHTML = "Erro de conexão."; }
     }
 
-    async function gerarHorarios() {
-        const dataSel = document.getElementById("data-agenda").value;
-        const bId = document.getElementById("select-barbeiro").value;
+    async function carregarHorariosPremium(data) {
         const grid = document.getElementById("grid-horarios");
-        if(!bId || !dataSel) return;
+        const bId = document.getElementById("select-barbeiro").value;
+        grid.innerHTML = "<p style='grid-column:1/-1; color:var(--primary); text-align:center;'>Verificando horários...</p>";
 
-        grid.innerHTML = "<p style='grid-column: 1/-1; text-align:center; font-size:0.8rem; color:var(--primary)'>Buscando horários...</p>";
-
-        const [agSnap, blSnap] = await Promise.all([
-            db.collection("agenda").where("data", "==", dataSel).where("barbeiroId", "==", bId).get(),
-            db.collection("bloqueios").where("data", "==", dataSel).where("barbeiroId", "==", bId).get()
-        ]);
-
+        const agSnap = await db.collection("agenda").where("data", "==", data).where("barbeiroId", "==", bId).get();
+        const blSnap = await db.collection("bloqueios").where("data", "==", data).where("barbeiroId", "==", bId).get();
         const ocupados = [...agSnap.docs.map(d => d.data().hora), ...blSnap.docs.map(d => d.data().hora)];
-        grid.innerHTML = "";
         
-        const agora = new Date();
-        const hojeIso = agora.getFullYear() + "-" + String(agora.getMonth() + 1).padStart(2, '0') + "-" + String(agora.getDate()).padStart(2, '0');
+        grid.innerHTML = "";
+        const horas = ["09:00","09:30","10:00","10:30","11:00","11:30","12:00","12:30","13:00","13:30","14:00","14:30","15:00","15:30","16:00","16:30","17:00","17:30","18:00","18:30","19:00","19:30"];
 
-        horasBase.forEach(hora => {
-            let indisponivel = ocupados.includes(hora);
-            
-            if (dataSel === hojeIso) {
-                const [h, m] = hora.split(':');
-                const hHora = new Date(); hHora.setHours(h, m, 0);
-                if (hHora.getTime() < (agora.getTime() + 45 * 60 * 1000)) indisponivel = true;
-            }
-            
-            const div = document.createElement("div");
-            div.className = "hora-btn " + (indisponivel ? "ocupada" : "");
-            div.textContent = hora;
-            div.onclick = () => {
-                if(indisponivel) return;
-                playClick();
+        horas.forEach(h => {
+            const isOcupado = ocupados.includes(h);
+            const btn = document.createElement("div");
+            btn.className = "hora-btn " + (isOcupado ? "ocupada" : "");
+            btn.textContent = h;
+            btn.onclick = () => {
+                if(isOcupado) return;
                 document.querySelectorAll(".hora-btn").forEach(e => e.classList.remove("selecionada"));
-                div.classList.add("selecionada"); horarioSelecionado = hora;
+                btn.classList.add("selecionada");
+                horarioSelecionado = h;
             };
-            grid.appendChild(div);
+            grid.appendChild(btn);
         });
     }
 
     async function confirmarAgendamento() {
-        const btn = document.getElementById("btn-confirmar");
         const nome = document.getElementById("nome-cliente").value;
-        const whatsapp = document.getElementById("whatsapp-cliente").value;
         const bId = document.getElementById("select-barbeiro").value;
         const data = document.getElementById("data-agenda").value;
-        const serv = document.getElementById("select-servico").value;
+        if(!nome || !horarioSelecionado || !data) return alert("Por favor, preencha todos os campos!");
 
-        if(!nome || !horarioSelecionado || !bId || !serv) return alert("Por favor, preencha todos os campos!");
-
-        btn.disabled = true; btn.innerText = "RESERVANDO...";
-
-        try {
-            await db.collection("agenda").add({ 
-                cliente: nome, 
-                clienteWhatsapp: whatsapp, 
-                barbeiroId: bId, 
-                data, 
-                hora: horarioSelecionado, 
-                servico: serv, 
-                criadoEm: firebase.firestore.FieldValue.serverTimestamp() 
-            });
-            
-            if(configGeral.botToken && configGeral.chatId) {
-                const msg = `🚀 NOVO AGENDAMENTO\n👤 Cliente: ${nome}\n📅 Data: ${data.split('-').reverse().join('/')}\n⏰ Hora: ${horarioSelecionado}\n✂️ Serviço: ${serv}`;
-                fetch(`https://api.telegram.org/bot${configGeral.botToken}/sendMessage?chat_id=${configGeral.chatId}&text=${encodeURIComponent(msg)}`).catch(()=>{});
-            } 
-            playSuccess();
-            document.getElementById('modal-sucesso').style.display = 'flex';
-        } catch (e) { 
-            alert("Erro ao salvar. Verifique sua conexão."); 
-            btn.disabled = false; btn.innerText = "Finalizar Agendamento";
-        }
+        await db.collection("agenda").add({ 
+            cliente: nome, barbeiroId: bId, data, hora: horarioSelecionado, criadoEm: new Date() 
+        });
+        document.getElementById('modal-sucesso').style.display = 'flex';
     }
 </script>
 </body>
