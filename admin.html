@@ -16,11 +16,9 @@
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
         body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding-bottom: 100px; }
 
-        /* Login */
         #modal-login { position: fixed; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 9999; }
         .login-box { width: 85%; max-width: 350px; text-align: center; padding: 40px 25px; background: var(--card); border-radius: 35px; border: 1px solid #222; }
 
-        /* Menu */
         .top-nav-container { padding: 25px 15px; text-align: center; background: linear-gradient(to bottom, #111, transparent); position: sticky; top: 0; z-index: 100; backdrop-filter: blur(10px); }
         .tab-bar { background: rgba(22, 22, 22, 0.7); padding: 6px; border-radius: 20px; display: flex; max-width: 550px; margin: 0 auto; border: 1px solid #222; }
         .tab-btn { padding: 12px 2px; border-radius: 14px; color: var(--text-dim); font-size: 0.65rem; font-weight: 600; cursor: pointer; flex: 1; text-align: center; transition: 0.4s; display: flex; flex-direction: column; align-items: center; gap: 4px; border: 1px solid transparent; }
@@ -38,7 +36,6 @@
         .btn-action { width: 100%; padding: 18px; border-radius: 18px; background: var(--grad); color: #000; font-weight: 900; border: none; cursor: pointer; text-transform: uppercase; font-size: 0.8rem; }
         .btn-outline { width: 100%; padding: 15px; background: transparent; border: 1px solid #333; color: var(--text-dim); border-radius: 15px; font-weight: 700; font-size: 0.7rem; cursor: pointer; text-transform: uppercase; }
 
-        /* Chips & Grids */
         .grid-folgas { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 20px; }
         .check-hora { display: none; }
         .label-hora { background: #1a1a1a; padding: 10px 2px; border-radius: 10px; font-size: 0.65rem; text-align: center; border: 1px solid #252525; cursor: pointer; font-weight: 700; color: var(--text-dim); }
@@ -78,6 +75,7 @@
 
     <div class="content">
         <div id="tab-agenda" class="tab-content">
+            <label>Filtrar por Profissional</label>
             <select id="filtro-barbeiro-agenda" onchange="carregarAgenda()"></select>
             <div id="render-agenda"></div>
         </div>
@@ -107,8 +105,7 @@
                 <div class="grid-folgas" id="grid-selecao-folgas"></div>
                 <button class="btn-action" style="background: var(--danger); color: #fff;" onclick="salvarVariasFolgas()">Confirmar Bloqueio</button>
             </div>
-            
-            <label>Filtrar Bloqueios por Barbeiro</label>
+            <label>Filtrar Bloqueios Ativos</label>
             <select id="filtro-folgas-barbeiro" onchange="carregarFolgas()"></select>
             <div id="render-folgas"></div>
         </div>
@@ -116,9 +113,9 @@
         <div id="tab-config" class="tab-content" style="display:none;">
             <div class="card">
                 <h3>Janela de Agendamento</h3>
-                <label>Limite de semanas para o cliente</label>
+                <label>Limite de semanas visíveis ao cliente</label>
                 <select id="conf-semanas">
-                    <option value="1">1 Semana (Somente a atual)</option>
+                    <option value="1">1 Semana (Somente atual)</option>
                     <option value="2">2 Semanas</option>
                     <option value="3">3 Semanas</option>
                     <option value="4">4 Semanas (1 Mês)</option>
@@ -128,15 +125,13 @@
 
             <div class="card">
                 <div class="premium-badge">PREMIUM</div>
-                <h3>Plano e Assinatura</h3>
-                <p id="txt-restam" style="font-size:0.75rem; color:var(--text-dim); margin-bottom:15px;">Calculando dias...</p>
-                <label>ID de Transação Mercado Pago</label>
-                <input type="text" id="input-payment-id" placeholder="ID do Pagamento">
-                <button class="btn-outline" style="color:var(--success); border-color:var(--success)" onclick="verificarPagamentoManual()">Validar Renovação</button>
+                <h3>Assinatura do Sistema</h3>
+                <p id="txt-restam" style="font-size:0.75rem; color:var(--text-dim); margin-bottom:15px;">Calculando...</p>
+                <button class="btn-outline" onclick="window.open('https://wa.me/SEU_NUMERO')">Suporte / Renovação</button>
             </div>
 
             <div class="card">
-                <h3>Dias de Trabalho</h3>
+                <h3>Dias de Funcionamento</h3>
                 <div class="dias-grid" id="dias-config">
                     <div class="dia-chip" data-day="1" onclick="toggleDia(this)">Segunda</div>
                     <div class="dia-chip" data-day="2" onclick="toggleDia(this)">Terça</div>
@@ -146,23 +141,23 @@
                     <div class="dia-chip" data-day="6" onclick="toggleDia(this)">Sábado</div>
                     <div class="dia-chip" data-day="0" onclick="toggleDia(this)">Domingo</div>
                 </div>
-                <button class="btn-action" onclick="salvarDias()">Atualizar Agenda</button>
+                <button class="btn-action" onclick="salvarDias()">Atualizar Funcionamento</button>
             </div>
 
             <div class="card">
                 <h3>Notificações Telegram</h3>
-                <label>Token do Bot (@BotFather)</label>
+                <label>Token do Bot</label>
                 <input type="password" id="conf-telegram-token" placeholder="Bot Token">
-                <label>Seu Chat ID (@userinfobot)</label>
-                <input type="password" id="conf-telegram-chatid" placeholder="Seu ID">
-                <button class="btn-outline" onclick="salvarConfigBot()">Salvar Bot</button>
+                <label>Chat ID do Admin</label>
+                <input type="password" id="conf-telegram-chatid" placeholder="Seu Chat ID">
+                <button class="btn-outline" onclick="salvarConfigBot()">Salvar Configurações</button>
             </div>
 
             <div class="card">
-                <h3>Segurança</h3>
-                <label>Nova Senha do Painel</label>
+                <h3>Acesso ao Painel</h3>
+                <label>Nova Senha</label>
                 <input type="password" id="nova-senha" placeholder="Mínimo 4 dígitos">
-                <button class="btn-action" style="background:#222; color:var(--danger)" onclick="salvarNovaSenha()">Trocar Senha</button>
+                <button class="btn-action" style="background:#222; color:var(--danger)" onclick="salvarNovaSenha()">Alterar Senha</button>
             </div>
         </div>
     </div>
@@ -183,15 +178,15 @@
     const horasBase = ["08:00","08:30","09:00","09:30","10:00","10:30","11:00","11:30","13:00","13:30","14:00","14:30","15:00","15:30","16:00","16:30","17:00","17:30","18:00","18:30","19:00","19:30"];
     let barbeirosCache = [];
 
-    // Login e Inicialização
     async function fazerLogin() {
         const senha = document.getElementById('senha-login').value;
         const doc = await db.collection("configuracao").doc("acesso").get();
-        if(senha === (doc.exists ? doc.data().senha : "4321")) {
+        const senhaCorreta = doc.exists ? doc.data().senha : "4321";
+        if(senha === senhaCorreta) {
             document.getElementById('modal-login').style.display = 'none';
             document.getElementById('main-app').style.display = 'block';
             init();
-        } else { alert("Senha incorreta"); }
+        } else { alert("Senha incorreta!"); }
     }
 
     async function init() {
@@ -203,20 +198,18 @@
         verificarAssinatura();
         carregarConfigSemanas();
         limparAgendamentosAntigos();
-        const hoje = new Date().toISOString().split('T')[0];
-        document.getElementById('f-data').value = hoje;
+        document.getElementById('f-data').value = new Date().toISOString().split('T')[0];
     }
 
-    // Config Limite de Semanas
     async function salvarLimiteSemanas() {
         const semanas = document.getElementById('conf-semanas').value;
-        await db.collection("configuracao").doc("calendario").set({ semanasLimite: parseInt(semanas) });
-        alert("Limite de semanas atualizado!");
+        await db.collection("configuracao").doc("calendario").set({ semanasLimite: parseInt(semanas) }, {merge: true});
+        alert("Limite atualizado!");
     }
 
     async function carregarConfigSemanas() {
         const doc = await db.collection("configuracao").doc("calendario").get();
-        if(doc.exists) document.getElementById('conf-semanas').value = doc.data().semanasLimite;
+        if(doc.exists && doc.data().semanasLimite) document.getElementById('conf-semanas').value = doc.data().semanasLimite;
     }
 
     async function carregarEquipe() {
@@ -229,89 +222,74 @@
         const s3 = document.getElementById('filtro-folgas-barbeiro');
         
         re.innerHTML = "";
-        const optionsDefault = '<option value="">Todos os Barbeiros</option>';
-        s1.innerHTML = optionsDefault;
+        s1.innerHTML = '<option value="">Todos os Barbeiros</option>';
         s2.innerHTML = '<option value="">Selecione o Barbeiro</option>';
-        s3.innerHTML = optionsDefault;
+        s3.innerHTML = '<option value="">Filtrar por Barbeiro</option>';
 
         barbeirosCache.forEach(b => {
             const opt = `<option value="${b.id}">${b.nome}</option>`;
-            s1.innerHTML += opt;
-            s2.innerHTML += opt;
-            s3.innerHTML += opt;
+            s1.innerHTML += opt; s2.innerHTML += opt; s3.innerHTML += opt;
             re.innerHTML += `<div class="item-list"><span><b>${b.nome}</b></span><div><button class="btn-edit" onclick="prepararEdicao('${b.id}')">Editar</button><button class="btn-del" onclick="excluir('barbeiros', '${b.id}')">X</button></div></div>`;
         });
     }
 
-    // ABA FOLGAS COM FILTRO
     function carregarFolgas() {
         const bId = document.getElementById('filtro-folgas-barbeiro').value;
         const render = document.getElementById('render-folgas');
-        
         let query = db.collection("bloqueios").orderBy("data", "desc");
         if(bId) query = query.where("barbeiroId", "==", bId);
 
-        query.limit(15).onSnapshot(snap => {
-            render.innerHTML = "<h3 style='font-size:0.65rem; margin-top:20px;'>Bloqueios Recentes</h3>";
-            if(snap.empty) render.innerHTML += "<p style='font-size:0.7rem; color:gray'>Nenhum bloqueio encontrado.</p>";
-            
+        query.limit(20).onSnapshot(snap => {
+            render.innerHTML = "";
+            if(snap.empty) render.innerHTML = "<p style='font-size:0.7rem; color:gray; text-align:center;'>Nenhum bloqueio.</p>";
             snap.forEach(doc => {
                 const f = doc.data();
                 const nomeB = barbeirosCache.find(x => x.id === f.barbeiroId)?.nome || "Geral";
                 render.innerHTML += `<div class="item-list" style="font-size:0.7rem;">
-                    <span><b>${nomeB}</b>: ${f.data.split('-').reverse().join('/')} - ${f.hora}</span>
+                    <span><b>${nomeB}</b>: ${f.data.split('-').reverse().join('/')} às ${f.hora}</span>
                     <button class="btn-del" onclick="excluir('bloqueios', '${doc.id}')">REMOVER</button>
                 </div>`;
             });
         });
     }
 
-    // Plano e Assinatura
     async function verificarAssinatura() {
         const doc = await db.collection("configuracao").doc("assinatura").get();
         if(doc.exists) {
             const dataLimite = doc.data().premiumAte.toDate();
             const resta = Math.ceil((dataLimite - new Date()) / (1000*60*60*24));
-            document.getElementById('txt-restam').innerHTML = resta > 0 ? `Status: <b style="color:var(--success)">Ativo</b> - Restam ${resta} dias` : `<b style="color:var(--danger)">Expirado</b>`;
+            document.getElementById('txt-restam').innerHTML = resta > 0 ? `Status: <b style="color:var(--success)">Ativo</b> - Vence em ${resta} dias` : `<b style="color:var(--danger)">Expirado</b>`;
         }
-    }
-
-    async function verificarPagamentoManual() {
-        alert("ID enviado para validação.");
     }
 
     async function salvarConfigBot() {
         const token = document.getElementById('conf-telegram-token').value;
         const chat = document.getElementById('conf-telegram-chatid').value;
-        await db.collection("configuracao").doc("telegram").set({ token, chatId: chat });
-        alert("Configurações do Bot salvas!");
+        await db.collection("configuracao").doc("telegram").set({ token, chatId: chat }, {merge: true});
+        alert("Bot configurado!");
     }
 
     async function carregarConfigBot() {
         const doc = await db.collection("configuracao").doc("telegram").get();
         if(doc.exists) {
-            document.getElementById('conf-telegram-token').value = doc.data().token;
-            document.getElementById('conf-telegram-chatid').value = doc.data().chatId;
+            document.getElementById('conf-telegram-token').value = doc.data().token || "";
+            document.getElementById('conf-telegram-chatid').value = doc.data().chatId || "";
         }
     }
 
     async function salvarNovaSenha() {
         const nova = document.getElementById('nova-senha').value;
-        if(nova.length < 4) return alert("Mínimo 4 dígitos");
-        await db.collection("configuracao").doc("acesso").set({ senha: nova });
-        alert("Senha atualizada!");
+        if(nova.length < 4) return alert("Senha muito curta!");
+        await db.collection("configuracao").doc("acesso").set({ senha: nova }, {merge: true});
+        alert("Senha alterada!");
     }
 
     async function limparAgendamentosAntigos() {
-        const agora = new Date();
-        const snap = await db.collection("agenda").get();
-        snap.forEach(async (doc) => {
-            const ag = doc.data();
-            const dataAg = new Date(`${ag.data}T${ag.hora}:00`);
-            if ((agora - dataAg) / (1000 * 60) >= 30) {
-                await db.collection("agenda").doc(doc.id).delete();
-            }
-        });
+        const hoje = new Date().toISOString().split('T')[0];
+        const snap = await db.collection("agenda").where("data", "<", hoje).get();
+        const batch = db.batch();
+        snap.forEach(doc => batch.delete(doc.ref));
+        await batch.commit();
     }
 
     function switchTab(tab, el) {
@@ -320,68 +298,70 @@
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         el.classList.add('active');
         if(tab === 'agenda') carregarAgenda();
-        if(tab === 'folgas') carregarFolgas();
     }
 
     async function excluir(col, id) { 
-        if(confirm("Confirmar exclusão?")) { 
+        if(confirm("Deseja realmente excluir?")) { 
             await db.collection(col).doc(id).delete(); 
             if(col==='barbeiros') carregarEquipe(); 
         } 
     }
 
     function toggleDia(el) { el.classList.toggle('active'); }
+
     async function salvarDias() {
-    // Pega todos os chips que estão com a classe 'active'
-    const chipsAtivos = document.querySelectorAll('.dia-chip.active');
-    const ativos = Array.from(chipsAtivos).map(el => parseInt(el.dataset.day));
-    
-    if(ativos.length === 0) {
-        return alert("Selecione pelo menos um dia de trabalho!");
+        const ativos = Array.from(document.querySelectorAll('.dia-chip.active')).map(el => parseInt(el.dataset.day));
+        if(ativos.length === 0) return alert("Selecione os dias de trabalho!");
+        await db.collection("configuracao").doc("funcionamento").set({ diasAtivos: ativos }, {merge: true});
+        alert("Horário de funcionamento atualizado!");
     }
 
-    try {
-        await db.collection("configuracao").doc("funcionamento").set({ 
-            diasAtivos: ativos 
-        });
-        alert("Configuração salva! O site do cliente agora só mostrará estes dias.");
-    } catch (e) {
-        alert("Erro ao salvar: " + e.message);
-    }
-}
     async function carregarDiasAtivos() {
         const doc = await db.collection("configuracao").doc("funcionamento").get();
-        if(doc.exists) {
+        if(doc.exists && doc.data().diasAtivos) {
             const dias = doc.data().diasAtivos;
-            document.querySelectorAll('.dia-chip').forEach(el => { if(dias.includes(parseInt(el.dataset.day))) el.classList.add('active'); });
+            document.querySelectorAll('.dia-chip').forEach(el => { 
+                if(dias.includes(parseInt(el.dataset.day))) el.classList.add('active'); 
+            });
         }
     }
 
     function gerarCheckboxesFolga() {
         const container = document.getElementById('grid-selecao-folgas');
-        container.innerHTML = "";
-        horasBase.forEach(h => {
-            container.innerHTML += `<input type="checkbox" id="check-${h}" class="check-hora" value="${h}"><label for="check-${h}" class="label-hora">${h}</label>`;
-        });
+        container.innerHTML = horasBase.map(h => `
+            <input type="checkbox" id="check-${h}" class="check-hora" value="${h}">
+            <label for="check-${h}" class="label-hora">${h}</label>
+        `).join('');
     }
 
     async function salvarVariasFolgas() {
         const bId = document.getElementById('f-barbeiro').value;
         const data = document.getElementById('f-data').value;
         const checks = document.querySelectorAll('.check-hora:checked');
-        if(!bId || !data || checks.length === 0) return alert("Selecione os dados");
-        for (let c of checks) { await db.collection("bloqueios").add({ barbeiroId: bId, data, hora: c.value }); }
-        alert("Bloqueios realizados!");
+        if(!bId || !data || checks.length === 0) return alert("Preencha todos os campos!");
+        
+        const batch = db.batch();
+        checks.forEach(c => {
+            const ref = db.collection("bloqueios").doc();
+            batch.set(ref, { barbeiroId: bId, data, hora: c.value });
+        });
+        await batch.commit();
+        alert("Horários bloqueados!");
         gerarCheckboxesFolga();
+        carregarFolgas();
     }
 
     async function carregarAgenda() {
         const bId = document.getElementById('filtro-barbeiro-agenda').value;
-        let query = db.collection("agenda").orderBy("data", "asc");
-        if(bId) query = query.where("barbeiroId", "==", bId);
-        const snap = await query.get();
         const render = document.getElementById('render-agenda');
-        render.innerHTML = snap.empty ? '<p style="text-align:center; padding:50px; color:gray; font-size:0.8rem;">Nada agendado.</p>' : "";
+        render.innerHTML = "<p style='text-align:center; color:var(--primary)'>Carregando...</p>";
+        
+        let query = db.collection("agenda").orderBy("data", "asc").orderBy("hora", "asc");
+        if(bId) query = query.where("barbeiroId", "==", bId);
+        
+        const snap = await query.get();
+        render.innerHTML = snap.empty ? '<p style="text-align:center; padding:50px; color:gray; font-size:0.8rem;">Nenhum agendamento encontrado.</p>' : "";
+        
         snap.forEach(doc => {
             const ag = doc.data();
             render.innerHTML += `
@@ -420,9 +400,12 @@
         const id = document.getElementById('edit-id').value;
         const nome = document.getElementById('b-nome').value;
         const servs = document.getElementById('b-servs').value;
+        if(!nome || !servs) return alert("Preencha o nome e os serviços!");
+        
         if(id) await db.collection("barbeiros").doc(id).update({ nome, servicos: servs });
         else await db.collection("barbeiros").add({ nome, servicos: servs });
-        limparForm(); carregarEquipe(); alert("Dados salvos!");
+        
+        limparForm(); carregarEquipe(); alert("Sucesso!");
     }
 </script>
 </body>
