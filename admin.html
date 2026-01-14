@@ -199,16 +199,76 @@
     let barbeirosCache = [];
     let unsubscribeAgenda = null;
 
-    async function fazerLogin() {
-        const senha = document.getElementById('senha-login').value;
-        const doc = await db.collection("configuracao").doc("acesso").get();
-        const senhaCorreta = doc.exists ? doc.data().senha : "4321";
-        if(senha === senhaCorreta) {
-            document.getElementById('modal-login').style.display = 'none';
-            document.getElementById('main-app').style.display = 'block';
-            init();
-        } else { alert("Senha incorreta!"); }
+    // --- LOGICA DE ACESSO E ATIVAÇÃO MESTRA ---
+
+async function fazerLogin() {
+    const senha = document.getElementById('senha-login').value;
+    
+    // Chave Mestra codificada para dificultar leitura via F12
+    const master = atob("RUxORUdST05FU0AyMDI2IQ=="); // 
+    
+    const doc = await db.collection("configuracao").doc("acesso").get();
+    const senhaCorreta = doc.exists ? doc.data().senha : "4321";
+    
+    // Aceita a senha do banco OU a chave mestra
+    if(senha === senhaCorreta || senha === master) {
+        document.getElementById('modal-login').style.display = 'none';
+        document.getElementById('main-app').style.display = 'block';
+        init();
+    } else { 
+        alert("Senha incorreta!"); 
     }
+}
+
+async function validarCodigoAtivacao() {
+    const inputField = document.getElementById('input-codigo-ativacao');
+    const codigo = inputField.value.trim();
+    if(!codigo) return alert("Insira um código!");
+
+    // Chaves Ofuscadas (F12 não lê)
+    const M_KEY = atob("TElCRVJBUkAzMA=="); // LIBERAR@30
+
+    try {
+        // 1. CHECAGEM MESTRA (Imediata)
+        if (codigo === M_KEY) {
+            await aplicarTrintaDias();
+            inputField.value = "";
+            alert("SISTEMA LIBERADO COM SUCESSO!");
+            return; // IMPORTANTE: Para a execução aqui!
+        }
+
+        // 2. CHECAGEM NO BANCO (Apenas se não for a mestra)
+        const ref = db.collection("codigos_ativacao").doc(codigo);
+        const doc = await ref.get();
+
+        if (doc.exists && !doc.data().usado) {
+            await ref.update({ usado: true, dataUso: new Date() });
+            await aplicarTrintaDias();
+            inputField.value = "";
+            alert("Sucesso! Código ativado.");
+        } else {
+            alert("Código inválido ou já utilizado.");
+        }
+    } catch (e) {
+        alert("Erro na conexão com o servidor.");
+    }
+}
+
+// Garanta que esta função esteja no seu código para processar os dias
+async function aplicarTrintaDias() {
+    const confRef = db.collection("configuracao").doc("assinatura");
+    const confDoc = await confRef.get();
+    let dataReferencia = new Date();
+    
+    if (confDoc.exists && confDoc.data().premiumAte) {
+        const dataVenc = confDoc.data().premiumAte.toDate();
+        dataReferencia = dataVenc > new Date() ? dataVenc : new Date();
+    }
+
+    dataReferencia.setDate(dataReferencia.getDate() + 30);
+    await confRef.set({ premiumAte: dataReferencia }, { merge: true });
+    verificarAssinatura(); // Atualiza o texto na tela
+}
 
     async function init() {
         await carregarEquipe();
