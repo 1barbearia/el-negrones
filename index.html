@@ -26,7 +26,7 @@
         label { font-size: 0.7rem; color: var(--primary); font-weight: 800; text-transform: uppercase; margin: 0 0 8px 10px; display: block; }
         input, select { width: 100%; padding: 18px; margin-bottom: 20px; border-radius: 20px; border: 1px solid #282828; background: var(--input-bg); color: #fff; font-size: 1rem; }
 
-        .datas-wrapper { display: flex; gap: 10px; overflow-x: auto; padding: 10px 5px; margin-bottom: 20px; scrollbar-width: none; -ms-overflow-style: none; }
+        .datas-wrapper { display: flex; gap: 10px; overflow-x: auto; padding: 10px 5px; margin-bottom: 20px; scrollbar-width: none; }
         .datas-wrapper::-webkit-scrollbar { display: none; }
         .card-data { 
             min-width: 75px; background: #1a1a1a; padding: 15px 10px; border-radius: 20px; 
@@ -57,13 +57,13 @@
 <div id="modal-sucesso">
     <div class="success-card">
         <h2 style="color:var(--primary); font-family:'Cinzel', serif;">RESERVA FEITA!</h2>
-        <p style="color:var(--text-dim); margin-bottom: 25px;">Seu horário foi agendado.</p>
+        <p style="color:var(--text-dim); margin-bottom: 25px;">Seu horário foi agendado com sucesso.</p>
         <button class="btn-principal" onclick="location.reload()">Sair</button>
     </div>
 </div>
 
 <div id="bloqueio-total">
-    <h2 style="color: #fff;">SISTEMA INDISPONÍVEL</h2>
+    <h2 style="color: #fff;">SISTEMA EM MANUTENÇÃO</h2>
 </div>
 
 <div class="container" id="app-content">
@@ -93,7 +93,7 @@
         <div class="horarios-grid" id="grid-horarios"></div>
         
         <label>Seu Nome</label>
-        <input type="text" id="nome-cliente" placeholder="Ex: João Silva">
+        <input type="text" id="nome-cliente" placeholder="Seu nome completo">
         
         <label>WhatsApp</label>
         <input type="tel" id="whatsapp-cliente" placeholder="(00) 00000-0000" oninput="maskWhatsApp(this)">
@@ -116,8 +116,7 @@
     
     let barbeirosData = [];
     let horarioSelecionado = null;
-    let botTokenGlobal = "";
-    let adminChatIdGlobal = "";
+    let configGeral = { semanas: 1, diasAtivos: [1,2,3,4,5,6], botToken: "", chatId: "" };
 
     const horasBase = ["09:00","09:30","10:00","10:30","11:00","11:30","12:00","12:30","13:00","13:30","14:00","14:30","15:00","15:30","16:00","16:30","17:00","17:30","18:00","18:30","19:00","19:30"];
 
@@ -134,22 +133,31 @@
     }
 
     window.onload = async () => {
-        verificarAssinatura();
-        carregarConfiguracoesTelegram();
+        await carregarConfiguracoesBase();
         carregarBarbeiros();
     };
 
-    async function verificarAssinatura() {
-        const doc = await db.collection("configuracao").doc("assinatura").get();
-        if(doc.exists && new Date() > doc.data().premiumAte.toDate()) {
-            document.getElementById('bloqueio-total').style.display = 'flex';
-            document.getElementById('app-content').style.display = 'none';
-        }
-    }
+    async function carregarConfiguracoesBase() {
+        try {
+            const [cCal, cDias, cTele, cAssin] = await Promise.all([
+                db.collection("configuracao").doc("calendario").get(),
+                db.collection("configuracao").doc("funcionamento").get(),
+                db.collection("configuracao").doc("telegram").get(),
+                db.collection("configuracao").doc("assinatura").get()
+            ]);
 
-    async function carregarConfiguracoesTelegram() {
-        const doc = await db.collection("configuracao").doc("telegram").get();
-        if(doc.exists) { botTokenGlobal = doc.data().token; adminChatIdGlobal = doc.data().chatId; }
+            if(cAssin.exists && new Date() > cAssin.data().premiumAte.toDate()) {
+                document.getElementById('bloqueio-total').style.display = 'flex';
+                document.getElementById('app-content').style.display = 'none';
+            }
+
+            if(cCal.exists) configGeral.semanas = cCal.data().semanasLimite || 1;
+            if(cDias.exists) configGeral.diasAtivos = cDias.data().diasAtivos || [1,2,3,4,5,6];
+            if(cTele.exists) {
+                configGeral.botToken = cTele.data().token;
+                configGeral.chatId = cTele.data().chatId;
+            }
+        } catch(e) { console.error("Erro config:", e); }
     }
 
     async function carregarBarbeiros() {
@@ -168,56 +176,28 @@
         carregarDatasPermitidas();
     } 
 
-    async function carregarDatasPermitidas() {
-    const render = document.getElementById('render-datas');
-    const bId = document.getElementById("select-barbeiro").value;
-    if(!bId) return;
+    function carregarDatasPermitidas() {
+        const render = document.getElementById('render-datas');
+        const bId = document.getElementById("select-barbeiro").value;
+        if(!bId) return;
 
-    render.innerHTML = "<p style='font-size:0.7rem; color:var(--primary)'>Buscando datas...</p>";
-
-    try {
-        // Busca as configurações (Adicionado timestamp para evitar cache do Firebase)
-        const [confCal, confDias] = await Promise.all([
-            db.collection("configuracao").doc("calendario").get(),
-            db.collection("configuracao").doc("funcionamento").get()
-        ]);
-        
-        // Pega o limite do Admin. Se não ler, força 2 semanas (14 dias)
-        let semanasLimite = 2; 
-        if(confCal.exists) {
-            const dataCal = confCal.data();
-            semanasLimite = parseInt(dataCal.semanasLimite || dataCal.semanaslimite || 2);
-        }
-
-        let diasAtivos = confDias.exists ? confDias.data().diasAtivos : [1,2,3,4,5,6];
-
-        render.innerHTML = ""; 
+        render.innerHTML = "";
         const diasSemanaNomes = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+        const hoje = new Date();
+        hoje.setHours(0,0,0,0);
 
-        // CORREÇÃO DE DATA: Criar data local pura
-        const agora = new Date();
-        const hoje = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate());
+        const totalDias = configGeral.semanas * 7;
 
-        // Força o loop a rodar 14 dias se o admin for 2, ou 7 se for 1.
-        const totalDiasBusca = semanasLimite * 7;
-
-        for (let i = 0; i < totalDiasBusca; i++) {
+        for (let i = 0; i < totalDias; i++) {
             let d = new Date(hoje);
             d.setDate(hoje.getDate() + i);
             
-            let diaSemana = d.getDay();
-
-            if (diasAtivos.includes(diaSemana)) {
-                // Formatação manual YYYY-MM-DD para evitar ISOString (que causa erro de fuso)
-                const ano = d.getFullYear();
-                const mes = String(d.getMonth() + 1).padStart(2, '0');
-                const diaNum = String(d.getDate()).padStart(2, '0');
-                const dataFormatada = `${ano}-${mes}-${diaNum}`;
-
+            if (configGeral.diasAtivos.includes(d.getDay())) {
+                const dataFormatada = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                
                 const card = document.createElement('div');
                 card.className = 'card-data';
-                card.innerHTML = `<span>${diasSemanaNomes[diaSemana]}</span><span>${d.getDate()}</span>`;
-                
+                card.innerHTML = `<span>${diasSemanaNomes[d.getDay()]}</span><span>${d.getDate()}</span>`;
                 card.onclick = () => {
                     playClick();
                     document.querySelectorAll('.card-data').forEach(c => c.classList.remove('selecionada'));
@@ -228,12 +208,7 @@
                 render.appendChild(card);
             }
         }
-
-    } catch (error) {
-        console.error("Erro fatal:", error);
-        render.innerHTML = "Erro ao carregar.";
     }
-}
 
     async function gerarHorarios() {
         const dataSel = document.getElementById("data-agenda").value;
@@ -241,13 +216,16 @@
         const grid = document.getElementById("grid-horarios");
         if(!bId || !dataSel) return;
 
-        grid.innerHTML = "<p style='grid-column: 1/-1; text-align:center; font-size:0.8rem; color:var(--primary)'>Consultando horários...</p>";
+        grid.innerHTML = "<p style='grid-column: 1/-1; text-align:center; font-size:0.8rem; color:var(--primary)'>Buscando horários...</p>";
 
-        const agSnap = await db.collection("agenda").where("data", "==", dataSel).where("barbeiroId", "==", bId).get();
-        const blSnap = await db.collection("bloqueios").where("data", "==", dataSel).where("barbeiroId", "==", bId).get();
+        const [agSnap, blSnap] = await Promise.all([
+            db.collection("agenda").where("data", "==", dataSel).where("barbeiroId", "==", bId).get(),
+            db.collection("bloqueios").where("data", "==", dataSel).where("barbeiroId", "==", bId).get()
+        ]);
+
         const ocupados = [...agSnap.docs.map(d => d.data().hora), ...blSnap.docs.map(d => d.data().hora)];
-        
         grid.innerHTML = "";
+        
         const agora = new Date();
         const hojeIso = agora.getFullYear() + "-" + String(agora.getMonth() + 1).padStart(2, '0') + "-" + String(agora.getDate()).padStart(2, '0');
 
@@ -256,10 +234,8 @@
             
             if (dataSel === hojeIso) {
                 const [h, m] = hora.split(':');
-                const dataHoraComp = new Date();
-                dataHoraComp.setHours(parseInt(h), parseInt(m), 0);
-                // Bloqueia horários passados ou com menos de 1h de antecedência
-                if (dataHoraComp.getTime() < (agora.getTime() + 60 * 60 * 1000)) indisponivel = true;
+                const hHora = new Date(); hHora.setHours(h, m, 0);
+                if (hHora.getTime() < (agora.getTime() + 45 * 60 * 1000)) indisponivel = true;
             }
             
             const div = document.createElement("div");
@@ -283,7 +259,7 @@
         const data = document.getElementById("data-agenda").value;
         const serv = document.getElementById("select-servico").value;
 
-        if(!nome || !horarioSelecionado || !bId || !serv) return alert("Preencha todos os campos!");
+        if(!nome || !horarioSelecionado || !bId || !serv) return alert("Por favor, preencha todos os campos!");
 
         btn.disabled = true; btn.innerText = "RESERVANDO...";
 
@@ -298,16 +274,15 @@
                 criadoEm: firebase.firestore.FieldValue.serverTimestamp() 
             });
             
-            if(botTokenGlobal && adminChatIdGlobal) {
+            if(configGeral.botToken && configGeral.chatId) {
                 const msg = `🚀 NOVO AGENDAMENTO\n👤 Cliente: ${nome}\n📅 Data: ${data.split('-').reverse().join('/')}\n⏰ Hora: ${horarioSelecionado}\n✂️ Serviço: ${serv}`;
-                fetch(`https://api.telegram.org/bot${botTokenGlobal}/sendMessage?chat_id=${adminChatIdGlobal}&text=${encodeURIComponent(msg)}`);
+                fetch(`https://api.telegram.org/bot${configGeral.botToken}/sendMessage?chat_id=${configGeral.chatId}&text=${encodeURIComponent(msg)}`).catch(()=>{});
             } 
             playSuccess();
             document.getElementById('modal-sucesso').style.display = 'flex';
         } catch (e) { 
-            alert("Erro ao agendar. Tente novamente."); 
-            btn.disabled = false; 
-            btn.innerText = "Finalizar Agendamento";
+            alert("Erro ao salvar. Verifique sua conexão."); 
+            btn.disabled = false; btn.innerText = "Finalizar Agendamento";
         }
     }
 </script>
