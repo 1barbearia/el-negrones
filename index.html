@@ -263,15 +263,43 @@
         });
     }
 
-    // Exemplo de como limitar no index.html
-async function carregarDatas() {
-    const docConf = await db.collection("configuracao").doc("calendario").get();
-    const semanasLimite = docConf.exists ? docConf.data().semanasLimite : 1;
+ async function carregarDatas() {
+    const servicoSel = document.getElementById('select-servico');
+    selecao.servico = servicoSel.value;
+    selecao.tempo = parseInt(servicoSel.options[servicoSel.selectedIndex].dataset.tempo) || 30;
     
-    const hoje = new Date();
-    const diasTotais = semanasLimite * 7;
+    if(!selecao.servico) return;
+
+    // 1. Busca as configurações de trava do Admin
+    const confCal = await db.collection("configuracao").doc("calendario").get();
+    const confDias = await db.collection("configuracao").doc("funcionamento").get();
     
-    // ... sua lógica de loop de dias agora deve ir apenas até 'diasTotais'
+    // Se não houver config, o padrão é 1 semana e dias de seg a sáb
+    const semanasLimite = confCal.exists ? confCal.data().semanasLimite : 1;
+    const diasAtivos = confDias.exists ? confDias.data().diasAtivos : [1,2,3,4,5,6];
+
+    const render = document.getElementById('render-datas');
+    render.innerHTML = "";
+    const diasSemana = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+    
+    // 2. Trava de Semanas: O loop só vai até o limite definido (ex: 7 dias se for 1 semana)
+    const limiteTotalDias = semanasLimite * 7;
+    
+    for(let i=0; i < limiteTotalDias; i++) {
+        let d = new Date();
+        d.setDate(d.getDate() + i);
+        
+        // 3. Trava de Dias de Trabalho: Só renderiza se o dia (0-6) estiver na lista 'diasAtivos'
+        if(diasAtivos.includes(d.getDay())) {
+            const dataIso = d.toISOString().split('T')[0];
+            render.innerHTML += `
+                <div class="card-data" onclick="selecionarData('${dataIso}', this)">
+                    <span>${diasSemana[d.getDay()]}</span>
+                    <span>${d.getDate()}</span>
+                </div>`;
+        }
+    }
+    document.getElementById('secao-data').style.display = 'block';
 }
 
     async function confirmarAgendamento() {
