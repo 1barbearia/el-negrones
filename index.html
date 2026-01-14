@@ -106,7 +106,7 @@
 
 <div class="container" id="app-content">
     <div class="header">
-        <img src="https://i.ibb.co/Lz0zX3y/logo-insta.jpg" alt="El Negrone's Logo" class="logo-img">
+        <img src="logo_insta.png" alt="El Negrone's Logo" class="logo-img">
         <h1>EL NEGRONE'S</h1>
         <p>Criando seu estilo</p>
     </div>
@@ -293,7 +293,7 @@
                 servico: serv, 
                 criadoEm: firebase.firestore.FieldValue.serverTimestamp() 
             });
-            
+             
             if(botTokenGlobal && destinoID) {
                 const dataFormatada = data.split('-').reverse().join('/');
                 const mensagemTelegram = `🚀 *NOVO AGENDAMENTO*\n\n` +
