@@ -9,76 +9,51 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&family=Cinzel:wght@700;900&display=swap" rel="stylesheet">
     <style>
         :root { 
-            --primary: #c5a059; 
-            --bg: #0a0a0a; 
-            --card: #141414; 
-            --input-bg: #1d1d1d; 
-            --text: #ffffff; 
-            --text-dim: #999; 
+            --primary: #c5a059; --bg: #0a0a0a; --card: #141414; 
+            --input-bg: #1d1d1d; --text: #ffffff; --text-dim: #999; 
             --grad: linear-gradient(135deg, #c5a059 0%, #a68549 100%); 
         }
-        
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
-        
         body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 10px; display: flex; justify-content: center; overflow-x: hidden; }
-        
         .container { width: 100%; max-width: 480px; padding-bottom: 50px; animation: fadeIn 0.8s ease; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* HEADER COM LOGO */
-        .header { text-align: center; padding: 20px 0 20px; }
-        .logo-img { width: 180px; height: auto; margin-bottom: 10px; filter: drop-shadow(0 5px 15px rgba(0,0,0,0.5)); }
-        
-        .header h1 { 
-            font-family: 'Cinzel', serif; /* Fonte estilizada similar à logo */
-            font-weight: 900; 
-            font-size: 1.8rem; 
-            color: var(--primary); 
-            letter-spacing: 2px; 
-            margin: 0; 
-            text-shadow: 0 4px 10px rgba(0,0,0,0.5);
-        }
+        .header { text-align: center; padding: 20px 0; }
+        .logo-img { width: 180px; height: auto; margin-bottom: 10px; }
+        .header h1 { font-family: 'Cinzel', serif; font-weight: 900; font-size: 1.8rem; color: var(--primary); letter-spacing: 2px; margin: 0; }
         .header p { font-size: 0.7rem; letter-spacing: 5px; color: var(--text-dim); text-transform: uppercase; margin-top: 5px; }
 
-        .card { background: var(--card); padding: 25px; border-radius: 35px; border: 1px solid #222; box-shadow: 0 20px 40px rgba(0,0,0,0.4); }
-        
-        label { font-size: 0.7rem; color: var(--primary); font-weight: 800; text-transform: uppercase; margin: 0 0 8px 10px; display: block; font-family: 'Inter', sans-serif; }
-        
-        input, select { width: 100%; padding: 18px; margin-bottom: 20px; border-radius: 20px; border: 1px solid #282828; background: var(--input-bg); color: #fff; font-size: 1rem; transition: 0.3s; }
-        input:focus { border-color: var(--primary); background: #222; }
+        .card { background: var(--card); padding: 25px; border-radius: 35px; border: 1px solid #222; }
+        label { font-size: 0.7rem; color: var(--primary); font-weight: 800; text-transform: uppercase; margin: 0 0 8px 10px; display: block; }
+        input, select { width: 100%; padding: 18px; margin-bottom: 20px; border-radius: 20px; border: 1px solid #282828; background: var(--input-bg); color: #fff; font-size: 1rem; }
+
+        /* Estilo dos Cards de Data */
+        .datas-wrapper { display: flex; gap: 10px; overflow-x: auto; padding: 10px 5px; margin-bottom: 20px; scrollbar-width: none; -ms-overflow-style: none; }
+        .datas-wrapper::-webkit-scrollbar { display: none; }
+        .card-data { 
+            min-width: 75px; background: #1a1a1a; padding: 15px 10px; border-radius: 20px; 
+            border: 1px solid #252525; text-align: center; cursor: pointer; transition: 0.3s;
+            display: flex; flex-direction: column; gap: 5px;
+        }
+        .card-data span:first-child { font-size: 0.6rem; text-transform: uppercase; color: var(--text-dim); font-weight: 800; }
+        .card-data span:last-child { font-size: 1.2rem; font-weight: 900; color: #fff; }
+        .card-data.selecionada { background: var(--grad); border: none; transform: scale(1.05); }
+        .card-data.selecionada span { color: #000 !important; }
 
         .horarios-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 25px; }
-        
         .hora-btn { 
             background: #1a1a1a; padding: 15px 5px; text-align: center; border-radius: 18px; 
-            border: 1px solid #252525; cursor: pointer; color: var(--text-dim); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
-            font-weight: 600; font-size: 0.9rem;
+            border: 1px solid #252525; cursor: pointer; color: var(--text-dim); font-weight: 600; 
         }
-        .hora-btn.selecionada { background: var(--grad); color: #000; font-weight: 800; border: none; transform: scale(1.08); box-shadow: 0 10px 20px rgba(197, 160, 89, 0.3); }
-        .hora-btn.ocupada { background: #111; opacity: 0.2; color: #444; border: 1px dashed #222; cursor: not-allowed; transform: scale(0.95); }
+        .hora-btn.selecionada { background: var(--grad); color: #000; font-weight: 800; border: none; }
+        .hora-btn.ocupada { background: #111; opacity: 0.2; color: #444; cursor: not-allowed; }
 
         .btn-principal { 
             width: 100%; padding: 22px; border-radius: 22px; background: var(--grad); color: #000; 
-            font-weight: 900; border: none; cursor: pointer; text-transform: uppercase; 
-            font-size: 1rem; letter-spacing: 1px; transition: 0.3s;
-            box-shadow: 0 10px 30px rgba(197, 160, 89, 0.2);
-            font-family: 'Inter', sans-serif;
+            font-weight: 900; border: none; cursor: pointer; text-transform: uppercase; font-size: 1rem;
         }
-        .btn-principal:active { transform: scale(0.97); }
-        .btn-principal:disabled { opacity: 0.6; cursor: not-allowed; }
-
-        /* MODAL DE SUCESSO */
-        #modal-sucesso { 
-            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); 
-            z-index: 10000; align-items: center; justify-content: center; padding: 20px;
-        }
-        .success-card { 
-            background: var(--card); padding: 40px 30px; border-radius: 40px; border: 1px solid var(--primary); 
-            text-align: center; max-width: 350px; animation: pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-        @keyframes pop { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-        .check-icon { font-size: 4rem; color: var(--primary); margin-bottom: 20px; display: block; }
-
+        #modal-sucesso { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 10000; align-items: center; justify-content: center; padding: 20px; }
+        .success-card { background: var(--card); padding: 40px 30px; border-radius: 40px; border: 1px solid var(--primary); text-align: center; max-width: 350px; }
         #bloqueio-total { display: none; position: fixed; inset: 0; background: #050505; z-index: 9999; align-items: center; justify-content: center; text-align: center; }
     </style>
 </head>
@@ -89,25 +64,19 @@
 
 <div id="modal-sucesso">
     <div class="success-card">
-        <span class="check-icon">✅</span>
-        <h2 style="color:var(--primary); font-family:'Cinzel', serif; font-weight:900;">RESERVA FEITA!</h2>
-        <p style="color:var(--text-dim); margin: 15px 0 25px;">Seu horário foi agendado e o barbeiro já foi notificado.</p>
-        <button class="btn-principal" onclick="location.reload()">Entendido</button>
+        <h2 style="color:var(--primary); font-family:'Cinzel', serif;">RESERVA FEITA!</h2>
+        <p style="color:var(--text-dim); margin-bottom: 25px;">Seu horário foi agendado e o barbeiro já foi notificado.</p>
+        <button class="btn-principal" onclick="location.reload()">Sair</button>
     </div>
 </div>
 
 <div id="bloqueio-total">
-    <div style="padding: 30px;">
-        <h1 style="color: var(--primary); font-size: 3rem; margin-bottom: 10px;">⚠️</h1>
-        <h2 style="color: #fff; font-weight: 900;">SISTEMA INDISPONÍVEL</h2>
-        <p style="color: var(--text-dim); max-width: 300px; margin: auto;">O sistema está em manutenção...</p> 
-    </div>
+    <h2 style="color: #fff;">SISTEMA INDISPONÍVEL</h2>
 </div>
 
 <div class="container" id="app-content">
     <div class="header">
-        <img src="logo_insta.png" alt="El Negrone's Logo" class="logo-img">
-        
+        <img src="logo_insta.png" alt="Logo" class="logo-img">
         <p>Criando seu estilo</p>
     </div>
 
@@ -123,7 +92,10 @@
         </select>
         
         <label>Escolha o dia</label>
-        <input type="date" id="data-agenda" onchange="playClick(); gerarHorarios()">
+        <div class="datas-wrapper" id="render-datas">
+            <p style="font-size: 0.7rem; color: gray;">Selecione o profissional primeiro</p>
+        </div>
+        <input type="hidden" id="data-agenda">
         
         <label>Horários Disponíveis</label>
         <div class="horarios-grid" id="grid-horarios"></div>
@@ -139,7 +111,6 @@
 </div>
 
 <script>
-    // Configurações do Firebase e Lógica permanecem as mesmas para manter a funcionalidade
     const firebaseConfig = { 
         apiKey: "AIzaSyC0x8q1N7R70BYhfd2daedBjRKH0qupJiI", 
         authDomain: "elnes-720ce.firebaseapp.com", 
@@ -153,7 +124,6 @@
     
     let barbeirosData = [];
     let horarioSelecionado = null;
-    let sistemaAtivo = true;
     let botTokenGlobal = "";
     let adminChatIdGlobal = "";
 
@@ -165,49 +135,29 @@
     function maskWhatsApp(i) {
         let v = i.value.replace(/\D/g,'');
         if(v.length > 11) v = v.substring(0,11);
-        if(v.length > 10) {
-            v = v.replace(/^(\d{2})(\d{5})(\d{4})/, "($1) $2-$3");
-        } else if(v.length > 5) {
-            v = v.replace(/^(\d{2})(\d{4})(\d{0,4})/, "($1) $2-$3");
-        } else if(v.length > 2) {
-            v = v.replace(/^(\d{2})(\d{0,5})/, "($1) $2");
-        } else if(v.length > 0) {
-            v = v.replace(/^(\d{0,2})/, "($1");
-        }
+        if(v.length > 10) v = v.replace(/^(\d{2})(\d{5})(\d{4})/, "($1) $2-$3");
+        else if(v.length > 5) v = v.replace(/^(\d{2})(\d{4})(\d{0,4})/, "($1) $2-$3");
+        else if(v.length > 2) v = v.replace(/^(\d{2})(\d{0,5})/, "($1) $2");
         i.value = v;
     }
 
     window.onload = async () => {
         await verificarAssinatura();
-        if(!sistemaAtivo) return;
         await carregarConfiguracoesTelegram();
         carregarBarbeiros();
-        const hoje = new Date().toISOString().split("T")[0];
-        document.getElementById('data-agenda').value = hoje;
-        document.getElementById('data-agenda').min = hoje;
     };
 
     async function verificarAssinatura() {
-        try {
-            const doc = await db.collection("configuracao").doc("assinatura").get();
-            if(doc.exists) {
-                const data = doc.data();
-                let expira = data.premiumAte ? data.premiumAte.toDate() : new Date(data.dataInstalacao.toDate().getTime() + 30 * 24 * 60 * 60 * 1000);
-                if (new Date() > expira) {
-                    sistemaAtivo = false;
-                    document.getElementById('bloqueio-total').style.display = 'flex';
-                    document.getElementById('app-content').style.display = 'none';
-                }
-            }
-        } catch(e) { console.error("Erro assinatura:", e); }
+        const doc = await db.collection("configuracao").doc("assinatura").get();
+        if(doc.exists && new Date() > doc.data().premiumAte.toDate()) {
+            document.getElementById('bloqueio-total').style.display = 'flex';
+            document.getElementById('app-content').style.display = 'none';
+        }
     }
 
     async function carregarConfiguracoesTelegram() {
         const doc = await db.collection("configuracao").doc("telegram").get();
-        if(doc.exists) {
-            botTokenGlobal = doc.data().token;
-            adminChatIdGlobal = doc.data().chatId;
-        }
+        if(doc.exists) { botTokenGlobal = doc.data().token; adminChatIdGlobal = doc.data().chatId; }
     }
 
     async function carregarBarbeiros() {
@@ -223,7 +173,44 @@
         const sS = document.getElementById("select-servico");
         sS.innerHTML = '<option value="">Selecione o Serviço</option>';
         if(b && b.servicos) b.servicos.split('\n').forEach(s => { if(s.trim()) sS.innerHTML += `<option>${s.trim()}</option>`; });
-        gerarHorarios();
+        carregarDatasPermitidas();
+    }
+
+    async function carregarDatasPermitidas() {
+        const render = document.getElementById('render-datas');
+        const bId = document.getElementById("select-barbeiro").value;
+        if(!bId) return;
+
+        render.innerHTML = "<p style='font-size:0.7rem; color:var(--primary)'>Buscando datas...</p>";
+
+        const confCal = await db.collection("configuracao").doc("calendario").get();
+        const confDias = await db.collection("configuracao").doc("funcionamento").get();
+        
+        const semanasLimite = confCal.exists ? parseInt(confCal.data().semanasLimite) : 1;
+        const diasAtivos = confDias.exists ? confDias.data().diasAtivos : [1,2,3,4,5,6];
+        const limiteDeDias = semanasLimite * 7;
+
+        render.innerHTML = "";
+        const diasSemana = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+
+        for (let i = 0; i < limiteDeDias; i++) {
+            let d = new Date();
+            d.setDate(d.getDate() + i);
+            if (diasAtivos.includes(d.getDay())) {
+                const dataIso = d.toISOString().split('T')[0];
+                const card = document.createElement('div');
+                card.className = 'card-data';
+                card.innerHTML = `<span>${diasSemana[d.getDay()]}</span><span>${d.getDate()}</span>`;
+                card.onclick = () => {
+                    playClick();
+                    document.querySelectorAll('.card-data').forEach(c => c.classList.remove('selecionada'));
+                    card.classList.add('selecionada');
+                    document.getElementById('data-agenda').value = dataIso;
+                    gerarHorarios();
+                };
+                render.appendChild(card);
+            }
+        }
     }
 
     async function gerarHorarios() {
@@ -243,12 +230,12 @@
         const hojeData = agora.toISOString().split('T')[0];
 
         horasBase.forEach(hora => {
-            let indisponivel = ocupados.includes(hora) || ocupados.includes("DIA_TODO");
+            let indisponivel = ocupados.includes(hora);
             if (dataSel === hojeData) {
                 const [h, m] = hora.split(':');
                 const dataHoraComp = new Date();
                 dataHoraComp.setHours(parseInt(h), parseInt(m), 0);
-                if (dataHoraComp.getTime() < (agora.getTime() + 2 * 60 * 60 * 1000)) indisponivel = true;
+                if (dataHoraComp.getTime() < (agora.getTime() + 1 * 60 * 60 * 1000)) indisponivel = true;
             }
             const div = document.createElement("div");
             div.className = "hora-btn " + (indisponivel ? "ocupada" : "");
@@ -263,55 +250,6 @@
         });
     }
 
- async function carregarDatas() {
-    const servicoSel = document.getElementById('select-servico');
-    if(!servicoSel.value) return;
-
-    // 1. Pega as travas do Admin
-    const confCal = await db.collection("configuracao").doc("calendario").get();
-    const confDias = await db.collection("configuracao").doc("funcionamento").get();
-    
-    // Se o Admin estiver vazio, o padrão é RIGOROSO: 1 semana e dias de Seg a Sáb
-    const semanasLimite = confCal.exists ? parseInt(confCal.data().semanasLimite) : 1;
-    const diasAtivos = confDias.exists ? confDias.data().diasAtivos : [1,2,3,4,5,6];
-
-    const render = document.getElementById('render-datas');
-    render.innerHTML = "";
-    
-    const diasSemana = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
-    
-    // DETERMINA O LIMITE EXATO DE DIAS (Ex: 1 semana = 7 dias a partir de hoje)
-    const limiteDeDias = semanasLimite * 7;
-
-    for (let i = 0; i < limiteDeDias; i++) {
-        let d = new Date();
-        d.setHours(0,0,0,0); // Zera as horas para comparação justa
-        d.setDate(d.getDate() + i);
-        
-        // TRAVA 1: Verifica se o dia da semana está ativo no seu Admin
-        if (diasAtivos.includes(d.getDay())) {
-            const dataIso = d.toISOString().split('T')[0];
-            
-            // Criar o card visual
-            const card = document.createElement('div');
-            card.className = 'card-data';
-            card.onclick = () => selecionarData(dataIso, card);
-            card.innerHTML = `
-                <span>${diasSemana[d.getDay()]}</span>
-                <span>${d.getDate()}</span>
-            `;
-            render.appendChild(card);
-        }
-    }
-
-    // Se o loop acabar e não tiver datas (ex: barbearia fechada a semana toda)
-    if (render.innerHTML === "") {
-        render.innerHTML = "<p style='font-size:0.7rem; color:gray; padding:10px;'>Nenhuma data disponível para esta semana.</p>";
-    }
-
-    document.getElementById('secao-data').style.display = 'block';
-}
-
     async function confirmarAgendamento() {
         const btn = document.getElementById("btn-confirmar");
         const nome = document.getElementById("nome-cliente").value;
@@ -320,59 +258,21 @@
         const data = document.getElementById("data-agenda").value;
         const serv = document.getElementById("select-servico").value;
 
-        if(!nome || !horarioSelecionado || !bId || !serv) {
-            return alert("Por favor, selecione todos os campos e o horário.");
-        }
+        if(!nome || !horarioSelecionado || !bId || !serv) return alert("Preencha tudo!");
 
-        const bAlvo = barbeirosData.find(x => x.id === bId);
-        const bNome = bAlvo ? bAlvo.nome : "";
-        const destinoID = (bAlvo && bAlvo.chatId) ? bAlvo.chatId : adminChatIdGlobal;
-
-        btn.disabled = true;
-        btn.innerText = "RESERVANDO...";
+        btn.disabled = true; btn.innerText = "RESERVANDO...";
 
         try {
-            await db.collection("agenda").add({ 
-                cliente: nome, 
-                clienteWhatsapp: whatsapp, 
-                barbeiroId: bId, 
-                barbeiroNome: bNome, 
-                data: data, 
-                hora: horarioSelecionado, 
-                servico: serv, 
-                criadoEm: firebase.firestore.FieldValue.serverTimestamp() 
-            });
-             
-            if(botTokenGlobal && destinoID) {
-                const dataFormatada = data.split('-').reverse().join('/');
-                const mensagemTelegram = `🚀 *NOVO AGENDAMENTO*\n\n` +
-                                       `👤 *Cliente:* ${nome}\n` +
-                                       `📱 *Whats:* ${whatsapp || 'Não informado'}\n` +
-                                       `📅 *Data:* ${dataFormatada}\n` +
-                                       `⏰ *Hora:* ${horarioSelecionado}\n` +
-                                       `✂️ *Serviço:* ${serv}\n` +
-                                       `💈 *Barbeiro:* ${bNome}`;
-
-                await fetch(`https://api.telegram.org/bot${botTokenGlobal}/sendMessage`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        chat_id: destinoID,
-                        text: mensagemTelegram,
-                        parse_mode: 'Markdown'
-                    })
-                });
+            const bAlvo = barbeirosData.find(x => x.id === bId);
+            await db.collection("agenda").add({ cliente: nome, clienteWhatsapp: whatsapp, barbeiroId: bId, data, hora: horarioSelecionado, servico: serv, criadoEm: firebase.firestore.FieldValue.serverTimestamp() });
+            
+            if(botTokenGlobal && adminChatIdGlobal) {
+                const msg = `🚀 NOVO AGENDAMENTO\n👤 Cliente: ${nome}\n📅 Data: ${data.split('-').reverse().join('/')}\n⏰ Hora: ${horarioSelecionado}\n✂️ Serviço: ${serv}`;
+                fetch(`https://api.telegram.org/bot${botTokenGlobal}/sendMessage?chat_id=${adminChatIdGlobal}&text=${encodeURIComponent(msg)}`);
             }
-
             playSuccess();
             document.getElementById('modal-sucesso').style.display = 'flex';
-
-        } catch (e) { 
-            console.error(e);
-            alert("Erro ao concluir agendamento."); 
-            btn.disabled = false; 
-            btn.innerText = "Finalizar Agendamento"; 
-        }
+        } catch (e) { alert("Erro!"); btn.disabled = false; }
     }
 </script>
 </body>
