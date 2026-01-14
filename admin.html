@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Admin Elite | El Negrone's</title>
+    <title>Admin | El Negrone's</title>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&family=Cinzel:wght@700;900&display=swap" rel="stylesheet">
@@ -332,11 +332,23 @@
 
     function toggleDia(el) { el.classList.toggle('active'); }
     async function salvarDias() {
-        const ativos = Array.from(document.querySelectorAll('.dia-chip.active')).map(el => parseInt(el.dataset.day));
-        await db.collection("configuracao").doc("funcionamento").set({ diasAtivos: ativos });
-        alert("Horários de funcionamento atualizados!");
+    // Pega todos os chips que estão com a classe 'active'
+    const chipsAtivos = document.querySelectorAll('.dia-chip.active');
+    const ativos = Array.from(chipsAtivos).map(el => parseInt(el.dataset.day));
+    
+    if(ativos.length === 0) {
+        return alert("Selecione pelo menos um dia de trabalho!");
     }
 
+    try {
+        await db.collection("configuracao").doc("funcionamento").set({ 
+            diasAtivos: ativos 
+        });
+        alert("Configuração salva! O site do cliente agora só mostrará estes dias.");
+    } catch (e) {
+        alert("Erro ao salvar: " + e.message);
+    }
+}
     async function carregarDiasAtivos() {
         const doc = await db.collection("configuracao").doc("funcionamento").get();
         if(doc.exists) {
@@ -386,7 +398,7 @@
     }
 
     function prepararEdicao(id) {
-        const b = barbeirosCache.find(x => x.id === id);
+        const b = barbeirosCache.find(x => x.id === id); 
         document.getElementById('edit-id').value = b.id;
         document.getElementById('b-nome').value = b.nome;
         document.getElementById('b-servs').value = b.servicos;
