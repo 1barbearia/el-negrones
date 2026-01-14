@@ -263,6 +263,17 @@
         });
     }
 
+    // Exemplo de como limitar no index.html
+async function carregarDatas() {
+    const docConf = await db.collection("configuracao").doc("calendario").get();
+    const semanasLimite = docConf.exists ? docConf.data().semanasLimite : 1;
+    
+    const hoje = new Date();
+    const diasTotais = semanasLimite * 7;
+    
+    // ... sua lógica de loop de dias agora deve ir apenas até 'diasTotais'
+}
+
     async function confirmarAgendamento() {
         const btn = document.getElementById("btn-confirmar");
         const nome = document.getElementById("nome-cliente").value;
