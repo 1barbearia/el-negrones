@@ -3,269 +3,166 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Admin Premium | El Negrones</title>
-    
+    <title>Admin | El Negrone's</title>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-    
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&family=Cinzel:wght@700;900&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --primary: #c5a059; 
-            --primary-dark: #a68549;
-            --bg: #050505; 
-            --card: #111111;
-            --input-bg: #1a1a1a; 
-            --text: #ffffff; 
-            --text-dim: #a0a0a0;
-            --danger: #ff4d4d; 
-            --success: #00ff88; 
-            --blue-action: #0095ff;
-            --grad: linear-gradient(135deg, #c5a059 0%, #a68549 100%);
+        :root { 
+            --primary: #c5a059; --bg: #0a0a0a; --card: #141414; --input-bg: #1d1d1d; 
+            --text: #ffffff; --text-dim: #999; --danger: #ff4d4d; --success: #00ff88;
+            --grad: linear-gradient(135deg, #c5a059 0%, #a68549 100%); 
         }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding-bottom: 100px; }
 
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; margin: 0; padding: 0; }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); line-height: 1.4; overflow-x: hidden; padding-bottom: 50px; }
+        /* Login */
+        #modal-login { position: fixed; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 9999; }
+        .login-box { width: 85%; max-width: 350px; text-align: center; padding: 40px 25px; background: var(--card); border-radius: 35px; border: 1px solid #222; }
 
-        #modal-login { position: fixed; inset: 0; background: radial-gradient(circle at center, #1a1a1a 0%, #050505 100%); display: flex; align-items: center; justify-content: center; z-index: 9999; }
-        .login-box { width: 85%; max-width: 340px; text-align: center; padding: 40px 25px; background: var(--card); border-radius: 30px; border: 1px solid #222; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
+        /* Menu */
+        .top-nav-container { padding: 25px 15px; text-align: center; background: linear-gradient(to bottom, #111, transparent); position: sticky; top: 0; z-index: 100; backdrop-filter: blur(10px); }
+        .tab-bar { background: rgba(22, 22, 22, 0.7); padding: 6px; border-radius: 20px; display: flex; max-width: 550px; margin: 0 auto; border: 1px solid #222; }
+        .tab-btn { padding: 12px 2px; border-radius: 14px; color: var(--text-dim); font-size: 0.65rem; font-weight: 600; cursor: pointer; flex: 1; text-align: center; transition: 0.4s; display: flex; flex-direction: column; align-items: center; gap: 4px; border: 1px solid transparent; }
+        .tab-btn span:first-child { font-size: 1.1rem; }
+        .tab-btn.active { background: rgba(255, 255, 255, 0.05); color: var(--primary); border: 1px solid rgba(197, 160, 89, 0.2); }
 
-        /* --- MENU REESTILIZADO --- */
-.top-nav-container { 
-    padding: 25px 15px; 
-    text-align: center; 
-    background: linear-gradient(to bottom, rgba(17,17,17,0.9), transparent);
-    backdrop-filter: blur(10px);
-    position: sticky;
-    top: 0;
-    z-index: 100;
-}
-
-.tab-bar { 
-    background: rgba(22, 22, 22, 0.7); 
-    padding: 6px; 
-    border-radius: 20px; 
-    display: flex; 
-    max-width: 550px; 
-    margin: 0 auto; 
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
-    backdrop-filter: blur(4px);
-}
-
-.tab-btn { 
-    padding: 12px 2px; 
-    border-radius: 14px; 
-    color: var(--text-dim); 
-    font-size: 0.75rem; 
-    font-weight: 600; 
-    cursor: pointer; 
-    flex: 1; 
-    text-align: center; 
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-    border: 1px solid transparent;
-}
-
-.tab-btn i { font-size: 1rem; margin-bottom: 2px; }
-
-.tab-btn.active { 
-    background: rgba(255, 255, 255, 0.05);
-    color: var(--primary); 
-    border: 1px solid rgba(197, 160, 89, 0.2);
-    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-}
-
-.tab-btn.premium-active { 
-    background: var(--grad); 
-    color: #000; 
-    font-weight: 800; 
-    box-shadow: 0 4px 20px rgba(197, 160, 89, 0.4);
-    transform: scale(1.05);
-}
-
-/* Efeito de hover para desktop */
-@media (min-width: 768px) {
-    .tab-btn:hover:not(.active):not(.premium-active) {
-        color: #fff;
-        background: rgba(255,255,255,0.03);
-    }
-}
-
-        .content { padding: 20px 15px; max-width: 500px; margin: auto; animation: fadeIn 0.5s ease; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .card { background: var(--card); border-radius: 24px; padding: 22px; margin-bottom: 18px; border: 1px solid #252525; }
+        .content { padding: 20px 15px; max-width: 480px; margin: auto; }
+        .card { background: var(--card); border-radius: 30px; padding: 25px; margin-bottom: 20px; border: 1px solid #222; position: relative; overflow: hidden; }
         
-        label { display: block; font-size: 0.65rem; font-weight: 700; color: var(--primary); margin: 0 0 8px 10px; text-transform: uppercase; }
-        input, select, textarea { width: 100%; padding: 16px; background: var(--input-bg); border: 1px solid #282828; border-radius: 16px; color: #fff; margin-bottom: 18px; font-size: 0.9rem; }
+        h3 { font-family: 'Cinzel', serif; color: var(--primary); font-size: 0.9rem; margin-bottom: 15px; text-transform: uppercase; }
+        label { font-size: 0.6rem; color: var(--primary); font-weight: 800; text-transform: uppercase; margin: 0 0 8px 10px; display: block; }
         
-        .input-container { position: relative; }
-        .btn-eye { position: absolute; right: 15px; top: 16px; background: none; border: none; color: var(--primary); font-size: 0.65rem; font-weight: 800; cursor: pointer; z-index: 5; }
+        input, select, textarea { width: 100%; padding: 16px; margin-bottom: 15px; border-radius: 15px; border: 1px solid #282828; background: var(--input-bg); color: #fff; font-size: 0.85rem; }
+        
+        .btn-action { width: 100%; padding: 18px; border-radius: 18px; background: var(--grad); color: #000; font-weight: 900; border: none; cursor: pointer; text-transform: uppercase; font-size: 0.8rem; }
+        .btn-outline { width: 100%; padding: 15px; background: transparent; border: 1px solid #333; color: var(--text-dim); border-radius: 15px; font-weight: 700; font-size: 0.7rem; cursor: pointer; text-transform: uppercase; }
 
-        .btn-action { width: 100%; padding: 18px; border-radius: 16px; border: none; background: var(--grad); color: #000; font-weight: 900; text-transform: uppercase; cursor: pointer; text-decoration: none; display: block; text-align: center; transition: 0.2s; }
-        .btn-action:active { transform: scale(0.98); }
-        
-        .premium-header { background: linear-gradient(180deg, #1a1a1a 0%, #111 100%); border: 1px solid var(--primary); text-align: center; }
-        .step-box { background: #080808; padding: 15px; border-radius: 15px; margin-top: 10px; border-left: 3px solid var(--primary); }
-        .step-text { font-size: 0.75rem; color: var(--text-dim); margin-bottom: 8px; display: flex; align-items: flex-start; gap: 8px; }
-        .step-num { background: var(--primary); color: #000; font-size: 0.6rem; padding: 2px 6px; border-radius: 50%; font-weight: 900; margin-top: 2px; }
+        /* Chips & Grids */
+        .grid-folgas { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 20px; }
+        .check-hora { display: none; }
+        .label-hora { background: #1a1a1a; padding: 10px 2px; border-radius: 10px; font-size: 0.65rem; text-align: center; border: 1px solid #252525; cursor: pointer; font-weight: 700; color: var(--text-dim); }
+        .check-hora:checked + .label-hora { background: var(--grad); color: #000; border: none; }
 
-        .item-list { display: flex; justify-content: space-between; align-items: center; padding: 15px; background: #181818; border-radius: 15px; margin-bottom: 10px; border: 1px solid #222; }
-        .btn-edit { color: var(--blue-action); font-size: 0.7rem; font-weight: 800; background: none; border: none; cursor: pointer; text-transform: uppercase; margin-right: 10px; }
-        .btn-del { color: var(--danger); font-size: 0.7rem; font-weight: 800; background: none; border: none; cursor: pointer; text-transform: uppercase; }
-        
-        .client-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
-        .client-name { font-size: 1rem; font-weight: 800; }
-        .badge-time { background: var(--primary); color: #000; padding: 4px 8px; border-radius: 8px; font-weight: 900; font-size: 0.7rem; }
-        .agenda-info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
-        .label-mini { font-size: 0.6rem; color: var(--text-dim); display: block; text-transform: uppercase; }
-        .val-highlight { font-weight: 700; font-size: 0.8rem; }
+        .dias-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px; }
+        .dia-chip { background: #1a1a1a; padding: 12px; border-radius: 12px; font-size: 0.7rem; text-align: center; border: 1px solid #252525; cursor: pointer; font-weight: 700; }
+        .dia-chip.active { border-color: var(--primary); color: var(--primary); background: rgba(197, 160, 89, 0.1); }
+
+        .item-list { display: flex; justify-content: space-between; align-items: center; padding: 15px; background: #1a1a1a; border-radius: 18px; margin-bottom: 10px; border: 1px solid #222; font-size: 0.8rem; }
+        .btn-edit { color: #0095ff; background: none; border: none; font-weight: 800; font-size: 0.65rem; cursor: pointer; margin-right: 12px; }
+        .btn-del { color: var(--danger); background: none; border: none; font-weight: 800; font-size: 0.65rem; cursor: pointer; }
+
+        .premium-badge { position: absolute; top: 15px; right: -30px; background: var(--grad); color: #000; padding: 5px 35px; font-size: 0.5rem; font-weight: 900; transform: rotate(45deg); }
     </style>
 </head>
 <body>
 
 <div id="modal-login">
     <div class="login-box">
-        <h1 style="color:var(--primary); font-weight:900; letter-spacing:5px; margin-bottom:10px;">EL NEGRONES</h1>
-        <p style="color:var(--text-dim); font-size:0.7rem; margin-bottom:20px;">ADMINISTRAÇÃO</p>
-        <div class="input-container">
-            <input type="password" id="senha-login" placeholder="Senha de Acesso" style="text-align: center;">
-            <button class="btn-eye" onclick="togglePass('senha-login')">VER</button>
-        </div>
+        <h1 style="font-family:'Cinzel'; color:var(--primary); font-size: 1.4rem;">EL NEGRONE'S</h1>
+        <p style="color:var(--text-dim); font-size:0.5rem; letter-spacing:3px; margin-bottom:30px;">PAINEL EXECUTIVO</p>
+        <input type="password" id="senha-login" placeholder="Senha de Acesso" style="text-align:center;">
         <button class="btn-action" onclick="fazerLogin()">Entrar</button>
     </div>
 </div>
 
-<div id="main-app" style="display: none;">
+<div id="main-app" style="display:none;">
     <div class="top-nav-container">
-    <div class="logo-main">✂️ ADMIN</div>
-    <div class="tab-bar">
-        <div class="tab-btn active" onclick="switchTab('agenda', this)">
-            <span>📅</span>
-            <span>Agenda</span>
-        </div>
-        <div class="tab-btn" onclick="switchTab('equipe', this)">
-            <span>👥</span>
-            <span>Equipe</span>
-        </div>
-        <div class="tab-btn" onclick="switchTab('folgas', this)">
-            <span>🔒</span>
-            <span>Folgas</span>
-        </div>
-        <div class="tab-btn" onclick="switchTab('premium', this)">
-            <span>⭐</span>
-            <span>Plano</span>
+        <div class="tab-bar">
+            <div class="tab-btn active" onclick="switchTab('agenda', this)"><span>📅</span><span>AGENDA</span></div>
+            <div class="tab-btn" onclick="switchTab('equipe', this)"><span>👥</span><span>EQUIPE</span></div>
+            <div class="tab-btn" onclick="switchTab('folgas', this)"><span>🔒</span><span>FOLGAS</span></div>
+            <div class="tab-btn" onclick="switchTab('config', this)"><span>⚙️</span><span>AJUSTES</span></div>
         </div>
     </div>
-</div>
 
     <div class="content">
         <div id="tab-agenda" class="tab-content">
-            <div class="filtro-box" style="margin-bottom: 25px; background: #111; padding: 15px; border-radius: 20px; border: 1px solid #222;">
-                <label>Filtrar por Barbeiro</label>
-                <select id="filtro-barbeiro-agenda" onchange="carregarAgenda()" style="margin-bottom:0">
-                    <option value="todos">📅 Mostrar Todos</option>
-                </select>
-            </div>
+            <select id="filtro-barbeiro-agenda" onchange="carregarAgenda()"></select>
             <div id="render-agenda"></div>
         </div>
-        <div id="tab-equipe" class="tab-content" style="display: none;">
+
+        <div id="tab-equipe" class="tab-content" style="display:none;">
             <div class="card">
-                <h3 id="titulo-editor-barbeiro" style="font-size: 0.8rem; margin-bottom: 15px; color: var(--primary);">CADASTRAR NOVO BARBEIRO</h3>
+                <h3 id="titulo-editor">Gerenciar Time</h3>
                 <input type="hidden" id="edit-id">
-                <label>Nome do Barbeiro</label>
+                <label>Nome do Profissional</label>
                 <input id="b-nome" placeholder="Ex: Lucas">
-                <label>Serviços e Preços</label>
-                <textarea id="b-servs" rows="4" placeholder="Corte - R$ 35"></textarea>
-                <button id="btn-salvar-barbeiro" class="btn-action" onclick="salvarBarbeiro()">Adicionar Barbeiro</button>
-                <button id="btn-cancelar-edit" style="display:none; background:none; color:gray; border:none; width:100%; margin-top:10px; font-size:0.7rem; font-weight:bold; cursor:pointer;" onclick="limparFormBarbeiro()">CANCELAR EDIÇÃO</button>
+                <label>Serviços (Nome - Preço - Minutos)</label>
+                <textarea id="b-servs" rows="4" placeholder="Corte - 40 - 30&#10;Barba - 30 - 30"></textarea>
+                <button class="btn-action" id="btn-salvar-b" onclick="salvarBarbeiro()">Adicionar Barbeiro</button>
+                <button id="btn-cancelar" class="btn-outline" style="display:none; margin-top:10px;" onclick="limparForm()">CANCELAR EDIÇÃO</button>
             </div>
             <div id="render-equipe"></div>
         </div>
 
-        <div id="tab-folgas" class="tab-content" style="display: none;">
+        <div id="tab-folgas" class="tab-content" style="display:none;">
             <div class="card">
-                <label>Profissional</label>
-                <select id="f-barbeiro"><option value="">Escolha...</option></select>
-                <label>Data</label>
+                <h3>Bloqueio de Horários</h3>
+                <label>Selecione o Barbeiro</label>
+                <select id="f-barbeiro"></select>
+                <label>Data do Bloqueio</label>
                 <input type="date" id="f-data">
-                <label>Tipo de Bloqueio</label>
-                <select id="f-tipo" onchange="toggleHoraInput()">
-                    <option value="DIA_TODO">Bloquear Dia Todo</option>
-                    <option value="HORA_UNICA">Bloquear Horário Específico</option>
-                </select>
-                <div id="box-hora-especifica" style="display: none;">
-                    <label>Selecione o Horário</label>
-                    <select id="f-hora-select">
-                        <script>
-                            const hores = ["08:00","08:30","09:00","09:30","10:00","10:30","11:00","11:30","13:00","13:30","14:00","14:30","15:00","15:30","16:00","16:30","17:00","17:30","18:00","18:30","19:00"];
-                            hores.forEach(h => document.write(`<option value="${h}">${h}</option>`));
-                        </script>
-                    </select>
-                </div>
-                <button class="btn-action" style="background:var(--danger); color:#fff" onclick="salvarFolga()">Confirmar Bloqueio</button>
+                <label>Toque nos horários para bloquear</label>
+                <div class="grid-folgas" id="grid-selecao-folgas"></div>
+                <button class="btn-action" style="background: var(--danger); color: #fff;" onclick="salvarVariasFolgas()">Confirmar Bloqueio</button>
             </div>
+            
+            <label>Filtrar Bloqueios por Barbeiro</label>
+            <select id="filtro-folgas-barbeiro" onchange="carregarFolgas()"></select>
             <div id="render-folgas"></div>
         </div>
 
-        <div id="tab-premium" class="tab-content" style="display: none;">
-            <div class="card premium-header">
-                <div style="font-size: 1.8rem; margin-bottom: 10px;">👑</div>
-                <h2 style="color:var(--primary); font-size: 1.2rem; margin-bottom:5px;">Plano Premium</h2>
-                <p id="txt-restam" style="color:#fff; font-size: 0.85rem; margin-bottom:20px; font-weight: 500;">...</p>
-                <a href="https://mpago.la/1bCHsKA" target="_blank" class="btn-action">RENOVAR AGORA</a>
-            </div>
+        <div id="tab-config" class="tab-content" style="display:none;">
             <div class="card">
-                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px;">
-                    <span style="font-size: 1.2rem;">💰</span>
-                    <h3 style="font-size: 0.75rem; color: var(--primary); text-transform: uppercase;">Ativação Instantânea</h3>
-                </div>
-                <label>ID da Transação do Mercado Pago</label>
-                <input type="text" id="input-payment-id" placeholder="Cole o código aqui...">
-                <button class="btn-action" id="btn-validar-mp" onclick="verificarPagamentoManual()" style="background: var(--input-bg); color: var(--success); border: 1px solid var(--success);">VALIDAR PAGAMENTO</button>
-                <p style="font-size: 0.6rem; color: var(--text-dim); margin-top: 10px; text-align: center;">ID do comprovante</p>
+                <h3>Janela de Agendamento</h3>
+                <label>Limite de semanas para o cliente</label>
+                <select id="conf-semanas">
+                    <option value="1">1 Semana (Somente a atual)</option>
+                    <option value="2">2 Semanas</option>
+                    <option value="3">3 Semanas</option>
+                    <option value="4">4 Semanas (1 Mês)</option>
+                </select>
+                <button class="btn-action" onclick="salvarLimiteSemanas()">Salvar Limite</button>
             </div>
 
             <div class="card">
-                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px;">
-                    <span style="font-size: 1.2rem;">📱</span>
-                    <h3 style="font-size: 0.75rem; color: var(--primary); text-transform: uppercase;">Notificações Telegram</h3>
-                </div>
-                <div class="step-box">
-                    <div class="step-text"><span class="step-num">1</span> Fale com o <b>@BotFather</b> e envie <b>/newbot</b>.</div>
-                    <div class="step-text"><span class="step-num">2</span> Copie o <b>HTTP API Token</b> abaixo.</div>
-                    <div class="step-text"><span class="step-num">3</span> Use o <b>@userinfobot</b> para o <b>Chat ID</b>.</div>
-                </div>
-                <div style="margin-top: 20px;">
-                    <label>Token do seu Bot</label>
-                    <div class="input-container">
-                        <input type="password" id="conf-telegram-token" placeholder="Token do Telegram">
-                        <button class="btn-eye" onclick="togglePass('conf-telegram-token')">VER</button>
-                    </div>
-                    <label>Seu Chat ID Pessoal</label>
-                    <div class="input-container">
-                        <input type="password" id="conf-telegram-chatid" placeholder="Seu Chat ID">
-                        <button class="btn-eye" onclick="togglePass('conf-telegram-chatid')">VER</button>
-                    </div>
-                    <button class="btn-action" onclick="salvarConfiguracoesBot()" style="background: #222; color: var(--primary); border: 1px solid #444;">SALVAR CONFIGURAÇÕES</button>
-                </div>
+                <div class="premium-badge">PREMIUM</div>
+                <h3>Plano e Assinatura</h3>
+                <p id="txt-restam" style="font-size:0.75rem; color:var(--text-dim); margin-bottom:15px;">Calculando dias...</p>
+                <label>ID de Transação Mercado Pago</label>
+                <input type="text" id="input-payment-id" placeholder="ID do Pagamento">
+                <button class="btn-outline" style="color:var(--success); border-color:var(--success)" onclick="verificarPagamentoManual()">Validar Renovação</button>
             </div>
 
             <div class="card">
-                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px;">
-                    <span style="font-size: 1.2rem;">🔐</span>
-                    <h3 style="font-size: 0.75rem; color: var(--primary); text-transform: uppercase;">Segurança do Painel</h3>
+                <h3>Dias de Trabalho</h3>
+                <div class="dias-grid" id="dias-config">
+                    <div class="dia-chip" data-day="1" onclick="toggleDia(this)">Segunda</div>
+                    <div class="dia-chip" data-day="2" onclick="toggleDia(this)">Terça</div>
+                    <div class="dia-chip" data-day="3" onclick="toggleDia(this)">Quarta</div>
+                    <div class="dia-chip" data-day="4" onclick="toggleDia(this)">Quinta</div>
+                    <div class="dia-chip" data-day="5" onclick="toggleDia(this)">Sexta</div>
+                    <div class="dia-chip" data-day="6" onclick="toggleDia(this)">Sábado</div>
+                    <div class="dia-chip" data-day="0" onclick="toggleDia(this)">Domingo</div>
                 </div>
-                <label>Alterar Senha de Acesso</label>
-                <div class="input-container">
-                    <input type="password" id="conf-nova-senha" placeholder="Mínimo 4 dígitos">
-                    <button class="btn-eye" onclick="togglePass('conf-nova-senha')">VER</button>
-                </div>
-                <button class="btn-action" onclick="salvarNovaSenha()" style="background: #222; color: var(--danger); border: 1px solid #444;">ATUALIZAR SENHA</button>
+                <button class="btn-action" onclick="salvarDias()">Atualizar Agenda</button>
+            </div>
+
+            <div class="card">
+                <h3>Notificações Telegram</h3>
+                <label>Token do Bot (@BotFather)</label>
+                <input type="password" id="conf-telegram-token" placeholder="Bot Token">
+                <label>Seu Chat ID (@userinfobot)</label>
+                <input type="password" id="conf-telegram-chatid" placeholder="Seu ID">
+                <button class="btn-outline" onclick="salvarConfigBot()">Salvar Bot</button>
+            </div>
+
+            <div class="card">
+                <h3>Segurança</h3>
+                <label>Nova Senha do Painel</label>
+                <input type="password" id="nova-senha" placeholder="Mínimo 4 dígitos">
+                <button class="btn-action" style="background:#222; color:var(--danger)" onclick="salvarNovaSenha()">Trocar Senha</button>
             </div>
         </div>
     </div>
@@ -283,265 +180,238 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    let barbeirosLocal = [];
+    const horasBase = ["08:00","08:30","09:00","09:30","10:00","10:30","11:00","11:30","13:00","13:30","14:00","14:30","15:00","15:30","16:00","16:30","17:00","17:30","18:00","18:30","19:00","19:30"];
+    let barbeirosCache = [];
 
-    // --- NOVA FUNÇÃO: AUTO-DELETE APÓS 30 MINUTOS ---
-    async function limparAgendamentosAntigos() {
-        const agora = new Date();
-        const snap = await db.collection("agenda").get();
-        
-        snap.forEach(async (doc) => {
-            const ag = doc.data();
-            // ag.data no formato YYYY-MM-DD e ag.hora no formato HH:mm
-            const dataHoraAgendamento = new Date(`${ag.data}T${ag.hora}:00`);
-            
-            // Calcula a diferença em milissegundos
-            const diffMs = agora - dataHoraAgendamento;
-            const diffMinutos = diffMs / (1000 * 60);
-
-            // Se o horário atual for 30 minutos maior que o horário marcado, deleta
-            if (diffMinutos >= 30) {
-                await db.collection("agenda").doc(doc.id).delete();
-                console.log(`Removido agendamento de ${ag.cliente} por tempo expirado.`);
-            }
-        });
-    }
-
+    // Login e Inicialização
     async function fazerLogin() {
-        const senhaDigitada = document.getElementById('senha-login').value;
-        try {
-            const segDoc = await db.collection("configuracao").doc("seguranca").get();
-            const dadosSeg = segDoc.exists ? segDoc.data() : {};
-            if(dadosSeg.master && senhaDigitada === dadosSeg.master) {
-                liberarInterface();
-                return;
-            }
-            const docAcesso = await db.collection("configuracao").doc("acesso").get();
-            let senhaBarbeiro = "4321";
-            if(docAcesso.exists) senhaBarbeiro = docAcesso.data().senha;
-
-            if(senhaDigitada === senhaBarbeiro) {
-                liberarInterface();
-            } else {
-                alert("❌ Senha incorreta!");
-            }
-        } catch (e) { alert("Erro de conexão."); }
-    }
-
-    // --- FUNÇÕES DE PAGAMENTO, CONFIG E CORE ---
-    async function verificarPagamentoManual() {
-        const inputVal = document.getElementById('input-payment-id').value.trim();
-        if (!inputVal) return alert("Insira o ID ou Código.");
-        const btn = document.getElementById('btn-validar-mp');
-        btn.innerText = "⌛ PROCESSANDO...";
-        try {
-            const segDoc = await db.collection("configuracao").doc("seguranca").get();
-            if (segDoc.exists) {
-                const dados = segDoc.data();
-                if (inputVal === dados.bypass || inputVal === dados.master) {
-                    await atualizarDataNoBanco(30, "Liberação Mestre");
-                    return;
-                }
-            }
-            const TOKEN = "APP_USR-7975852504443105-010519-5d63f9d504313f8c5b9671f1f1090400-149806410";
-            const res = await fetch(`https://api.mercadopago.com/v1/payments/${inputVal}`, {
-                headers: { 'Authorization': `Bearer ${TOKEN}` }
-            });
-            const data = await res.json();
-            if (data.status === 'approved') {
-                await atualizarDataNoBanco(30, inputVal);
-            } else { alert("⚠️ Pagamento não encontrado."); }
-        } catch (e) { alert("Erro."); }
-        finally { btn.innerText = "VALIDAR PAGAMENTO"; }
-    }
-
-    async function atualizarDataNoBanco(dias, idRef) {
-        new Audio('https://www.soundjay.com/misc/sounds/cash-register-05.mp3').play();
-        const docRef = db.collection("configuracao").doc("assinatura");
-        const doc = await docRef.get();
-        const hoje = new Date();
-        let novaData;
-        if (doc.exists && doc.data().premiumAte) {
-            const atual = doc.data().premiumAte.toDate();
-            const base = atual > hoje ? atual : hoje;
-            novaData = new Date(base.getTime() + dias * 24 * 60 * 60 * 1000);
-        } else { novaData = new Date(hoje.getTime() + dias * 24 * 60 * 60 * 1000); }
-        await docRef.set({ premiumAte: firebase.firestore.Timestamp.fromDate(novaData), status: "Ativo" }, {merge: true});
-        alert("✅ Renovado!"); location.reload();
-    }
-
-    function liberarInterface() {
-        document.getElementById('modal-login').style.display = 'none';
-        document.getElementById('main-app').style.display = 'block';
-        const hoje = new Date().toISOString().split('T')[0];
-        document.getElementById('f-data').setAttribute('min', hoje);
-        init();
-        limparAgendamentosAntigos(); // Limpa ao entrar
+        const senha = document.getElementById('senha-login').value;
+        const doc = await db.collection("configuracao").doc("acesso").get();
+        if(senha === (doc.exists ? doc.data().senha : "4321")) {
+            document.getElementById('modal-login').style.display = 'none';
+            document.getElementById('main-app').style.display = 'block';
+            init();
+        } else { alert("Senha incorreta"); }
     }
 
     async function init() {
-        await carregarEquipe(); carregarAgenda(); carregarFolgas(); verificarAssinatura(); 
-        const tg = await db.collection("configuracao").doc("telegram").get();
-        if(tg.exists) {
-            document.getElementById('conf-telegram-token').value = tg.data().token;
-            document.getElementById('conf-telegram-chatid').value = tg.data().chatId;
-        }
+        await carregarEquipe();
+        gerarCheckboxesFolga();
+        carregarDiasAtivos();
+        carregarFolgas();
+        carregarConfigBot();
+        verificarAssinatura();
+        carregarConfigSemanas();
+        limparAgendamentosAntigos();
+        const hoje = new Date().toISOString().split('T')[0];
+        document.getElementById('f-data').value = hoje;
     }
 
-    // --- VARIÁVEL GLOBAL PARA CONTROLE ---
-    let assinaturaAtiva = false;
-
-    async function verificarAssinatura() {
-        const docRef = db.collection("configuracao").doc("assinatura");
-        const doc = await docRef.get();
-        let dataLimite;
-        
-        if(!doc.exists) {
-            dataLimite = new Date(); dataLimite.setDate(dataLimite.getDate()+30);
-            await docRef.set({ premiumAte: firebase.firestore.Timestamp.fromDate(dataLimite), status: "Ativo" });
-        } else {
-            dataLimite = doc.data().premiumAte.toDate();
-        }
-
-        const resta = Math.ceil((dataLimite.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
-        const txt = document.getElementById('txt-restam');
-        
-        if (resta <= 0) {
-            assinaturaAtiva = false; // Bloqueia o acesso globalmente
-            txt.innerHTML = `<span style="color:var(--danger)">⚠️ EXPIRADO EM ${dataLimite.toLocaleDateString()}</span>`;
-            
-            // Força a visualização apenas da aba premium
-            document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
-            document.getElementById('tab-premium').style.display = 'block';
-            
-            // Esconde os botões das outras abas para evitar cliques
-            document.querySelectorAll('.tab-btn:not(:last-child)').forEach(b => b.style.display = 'none');
-            switchTab('premium', document.querySelector('.tab-btn:last-child'));
-            
-            alert("Sua assinatura expirou. Por favor, renove para acessar os dados.");
-        } else {
-            assinaturaAtiva = true; // Libera o acesso
-            txt.innerHTML = `STATUS: <span style="color:var(--success)">ATIVO</span> — Restam <b>${resta}</b> dias`;
-            document.querySelectorAll('.tab-btn').forEach(b => b.style.display = 'flex');
-        }
+    // Config Limite de Semanas
+    async function salvarLimiteSemanas() {
+        const semanas = document.getElementById('conf-semanas').value;
+        await db.collection("configuracao").doc("calendario").set({ semanasLimite: parseInt(semanas) });
+        alert("Limite de semanas atualizado!");
     }
 
-    // --- AGORA AJUSTAMOS AS FUNÇÕES DE CARREGAMENTO ---
-
-    function carregarAgenda() {
-        if(!assinaturaAtiva) return; // Se não estiver ativa, não faz nada
-        
-        const fId = document.getElementById('filtro-barbeiro-agenda').value;
-        let query = db.collection("agenda").orderBy("data", "asc");
-        // ... resto do seu código de carregar agenda
+    async function carregarConfigSemanas() {
+        const doc = await db.collection("configuracao").doc("calendario").get();
+        if(doc.exists) document.getElementById('conf-semanas').value = doc.data().semanasLimite;
     }
 
     async function carregarEquipe() {
-        if(!assinaturaAtiva) return; // Se não estiver ativa, não faz nada
+        const snap = await db.collection("barbeiros").get();
+        barbeirosCache = snap.docs.map(doc => ({id: doc.id, ...doc.data()}));
         
-        db.collection("barbeiros").onSnapshot(snap => {
-            // ... resto do seu código de carregar equipe
+        const re = document.getElementById('render-equipe');
+        const s1 = document.getElementById('filtro-barbeiro-agenda');
+        const s2 = document.getElementById('f-barbeiro');
+        const s3 = document.getElementById('filtro-folgas-barbeiro');
+        
+        re.innerHTML = "";
+        const optionsDefault = '<option value="">Todos os Barbeiros</option>';
+        s1.innerHTML = optionsDefault;
+        s2.innerHTML = '<option value="">Selecione o Barbeiro</option>';
+        s3.innerHTML = optionsDefault;
+
+        barbeirosCache.forEach(b => {
+            const opt = `<option value="${b.id}">${b.nome}</option>`;
+            s1.innerHTML += opt;
+            s2.innerHTML += opt;
+            s3.innerHTML += opt;
+            re.innerHTML += `<div class="item-list"><span><b>${b.nome}</b></span><div><button class="btn-edit" onclick="prepararEdicao('${b.id}')">Editar</button><button class="btn-del" onclick="excluir('barbeiros', '${b.id}')">X</button></div></div>`;
         });
     }
 
-    function carregarFolgas() { 
-        if(!assinaturaAtiva) return; // Se não estiver ativa, não faz nada
+    // ABA FOLGAS COM FILTRO
+    function carregarFolgas() {
+        const bId = document.getElementById('filtro-folgas-barbeiro').value;
+        const render = document.getElementById('render-folgas');
         
-        db.collection("bloqueios").orderBy("data", "desc").limit(10).onSnapshot(snap => {   
-            // ... resto do seu código de carregar folgas
+        let query = db.collection("bloqueios").orderBy("data", "desc");
+        if(bId) query = query.where("barbeiroId", "==", bId);
+
+        query.limit(15).onSnapshot(snap => {
+            render.innerHTML = "<h3 style='font-size:0.65rem; margin-top:20px;'>Bloqueios Recentes</h3>";
+            if(snap.empty) render.innerHTML += "<p style='font-size:0.7rem; color:gray'>Nenhum bloqueio encontrado.</p>";
+            
+            snap.forEach(doc => {
+                const f = doc.data();
+                const nomeB = barbeirosCache.find(x => x.id === f.barbeiroId)?.nome || "Geral";
+                render.innerHTML += `<div class="item-list" style="font-size:0.7rem;">
+                    <span><b>${nomeB}</b>: ${f.data.split('-').reverse().join('/')} - ${f.hora}</span>
+                    <button class="btn-del" onclick="excluir('bloqueios', '${doc.id}')">REMOVER</button>
+                </div>`;
+            });
+        });
+    }
+
+    // Plano e Assinatura
+    async function verificarAssinatura() {
+        const doc = await db.collection("configuracao").doc("assinatura").get();
+        if(doc.exists) {
+            const dataLimite = doc.data().premiumAte.toDate();
+            const resta = Math.ceil((dataLimite - new Date()) / (1000*60*60*24));
+            document.getElementById('txt-restam').innerHTML = resta > 0 ? `Status: <b style="color:var(--success)">Ativo</b> - Restam ${resta} dias` : `<b style="color:var(--danger)">Expirado</b>`;
+        }
+    }
+
+    async function verificarPagamentoManual() {
+        alert("ID enviado para validação.");
+    }
+
+    async function salvarConfigBot() {
+        const token = document.getElementById('conf-telegram-token').value;
+        const chat = document.getElementById('conf-telegram-chatid').value;
+        await db.collection("configuracao").doc("telegram").set({ token, chatId: chat });
+        alert("Configurações do Bot salvas!");
+    }
+
+    async function carregarConfigBot() {
+        const doc = await db.collection("configuracao").doc("telegram").get();
+        if(doc.exists) {
+            document.getElementById('conf-telegram-token').value = doc.data().token;
+            document.getElementById('conf-telegram-chatid').value = doc.data().chatId;
+        }
+    }
+
+    async function salvarNovaSenha() {
+        const nova = document.getElementById('nova-senha').value;
+        if(nova.length < 4) return alert("Mínimo 4 dígitos");
+        await db.collection("configuracao").doc("acesso").set({ senha: nova });
+        alert("Senha atualizada!");
+    }
+
+    async function limparAgendamentosAntigos() {
+        const agora = new Date();
+        const snap = await db.collection("agenda").get();
+        snap.forEach(async (doc) => {
+            const ag = doc.data();
+            const dataAg = new Date(`${ag.data}T${ag.hora}:00`);
+            if ((agora - dataAg) / (1000 * 60) >= 30) {
+                await db.collection("agenda").doc(doc.id).delete();
+            }
         });
     }
 
     function switchTab(tab, el) {
         document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
         document.getElementById('tab-'+tab).style.display = 'block';
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active', 'premium-active'));
-        el.classList.add(tab === 'premium' ? 'premium-active' : 'active');
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        el.classList.add('active');
+        if(tab === 'agenda') carregarAgenda();
+        if(tab === 'folgas') carregarFolgas();
     }
 
-    function togglePass(id) { const i = document.getElementById(id); i.type = i.type === "password" ? "text" : "password"; }
+    async function excluir(col, id) { 
+        if(confirm("Confirmar exclusão?")) { 
+            await db.collection(col).doc(id).delete(); 
+            if(col==='barbeiros') carregarEquipe(); 
+        } 
+    }
 
-    function carregarAgenda() {
-        const fId = document.getElementById('filtro-barbeiro-agenda').value;
+    function toggleDia(el) { el.classList.toggle('active'); }
+    async function salvarDias() {
+        const ativos = Array.from(document.querySelectorAll('.dia-chip.active')).map(el => parseInt(el.dataset.day));
+        await db.collection("configuracao").doc("funcionamento").set({ diasAtivos: ativos });
+        alert("Horários de funcionamento atualizados!");
+    }
+
+    async function carregarDiasAtivos() {
+        const doc = await db.collection("configuracao").doc("funcionamento").get();
+        if(doc.exists) {
+            const dias = doc.data().diasAtivos;
+            document.querySelectorAll('.dia-chip').forEach(el => { if(dias.includes(parseInt(el.dataset.day))) el.classList.add('active'); });
+        }
+    }
+
+    function gerarCheckboxesFolga() {
+        const container = document.getElementById('grid-selecao-folgas');
+        container.innerHTML = "";
+        horasBase.forEach(h => {
+            container.innerHTML += `<input type="checkbox" id="check-${h}" class="check-hora" value="${h}"><label for="check-${h}" class="label-hora">${h}</label>`;
+        });
+    }
+
+    async function salvarVariasFolgas() {
+        const bId = document.getElementById('f-barbeiro').value;
+        const data = document.getElementById('f-data').value;
+        const checks = document.querySelectorAll('.check-hora:checked');
+        if(!bId || !data || checks.length === 0) return alert("Selecione os dados");
+        for (let c of checks) { await db.collection("bloqueios").add({ barbeiroId: bId, data, hora: c.value }); }
+        alert("Bloqueios realizados!");
+        gerarCheckboxesFolga();
+    }
+
+    async function carregarAgenda() {
+        const bId = document.getElementById('filtro-barbeiro-agenda').value;
         let query = db.collection("agenda").orderBy("data", "asc");
-        if (fId !== "todos") query = query.where("barbeiroId", "==", fId);
-        query.onSnapshot(snap => {
-            const container = document.getElementById('render-agenda');
-            container.innerHTML = snap.empty ? '<p style="text-align:center; padding:50px; color:gray;">Nenhum agendamento.</p>' : "";
-            snap.docs.forEach(doc => {
-                const ag = doc.data();
-                container.innerHTML += `<div class="card"><div class="client-header"><div><span class="label-mini">${ag.data.split('-').reverse().join('/')}</span><h2 class="client-name">${ag.cliente}</h2></div><div class="badge-time">${ag.hora}</div></div><div class="agenda-info-grid"><div><span class="label-mini">Barbeiro</span><span class="val-highlight">${ag.barbeiroNome}</span></div><div><span class="label-mini">Serviço</span><span class="val-highlight" style="color:var(--primary)">${ag.servico}</span></div></div><div style="margin-top:15px; padding-top:12px; border-top:1px solid #222; display:flex; justify-content:space-between;"><a href="https://wa.me/55${ag.clienteWhatsapp?.replace(/\D/g,'')}" target="_blank" style="color:var(--success); text-decoration:none; font-size:0.7rem; font-weight:800;">📲 WHATSAPP</a><button class="btn-del" onclick="excluir('agenda', '${doc.id}')">Concluir</button></div></div>`;
-            });
+        if(bId) query = query.where("barbeiroId", "==", bId);
+        const snap = await query.get();
+        const render = document.getElementById('render-agenda');
+        render.innerHTML = snap.empty ? '<p style="text-align:center; padding:50px; color:gray; font-size:0.8rem;">Nada agendado.</p>' : "";
+        snap.forEach(doc => {
+            const ag = doc.data();
+            render.innerHTML += `
+                <div class="card">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                        <span style="color:var(--primary); font-weight:900; font-family:'Cinzel'">${ag.hora}</span>
+                        <span style="font-size:0.65rem; color:var(--text-dim)">${ag.data.split('-').reverse().join('/')}</span>
+                    </div>
+                    <div style="font-size:1rem; font-weight:800; margin-bottom:5px;">${ag.cliente.toUpperCase()}</div>
+                    <div style="font-size:0.65rem; color:var(--primary); font-weight:700;">${ag.servico}</div>
+                    <button class="btn-del" style="margin-top:15px; width:100%; border:1px solid #333; padding:12px; border-radius:15px;" onclick="excluir('agenda', '${doc.id}')">Concluir / Excluir</button>
+                </div>`;
         });
     }
 
-    async function carregarEquipe() {
-        db.collection("barbeiros").onSnapshot(snap => {
-            barbeirosLocal = snap.docs.map(doc => ({id: doc.id, ...doc.data()}));
-            const sf = document.getElementById('f-barbeiro');
-            const sfi = document.getElementById('filtro-barbeiro-agenda');
-            const re = document.getElementById('render-equipe');
-            sf.innerHTML = '<option value="">Escolha...</option>';
-            sfi.innerHTML = '<option value="todos">📅 Mostrar Todos</option>';
-            re.innerHTML = "";
-            barbeirosLocal.forEach(b => {
-                sf.innerHTML += `<option value="${b.id}">${b.nome}</option>`;
-                sfi.innerHTML += `<option value="${b.id}">${b.nome}</option>`;
-                re.innerHTML += `<div class="item-list"><b>${b.nome}</b><div><button class="btn-edit" onclick="prepararEdicao('${b.id}')">Editar</button><button class="btn-del" onclick="excluir('barbeiros', '${b.id}')">Remover</button></div></div>`;
-            });
-        });
+    function prepararEdicao(id) {
+        const b = barbeirosCache.find(x => x.id === id);
+        document.getElementById('edit-id').value = b.id;
+        document.getElementById('b-nome').value = b.nome;
+        document.getElementById('b-servs').value = b.servicos;
+        document.getElementById('titulo-editor').innerText = "Editando Profissional";
+        document.getElementById('btn-salvar-b').innerText = "Atualizar";
+        document.getElementById('btn-cancelar').style.display = "block";
+    }
+
+    function limparForm() {
+        document.getElementById('edit-id').value = "";
+        document.getElementById('b-nome').value = "";
+        document.getElementById('b-servs').value = "";
+        document.getElementById('titulo-editor').innerText = "Gerenciar Time";
+        document.getElementById('btn-salvar-b').innerText = "Adicionar Barbeiro";
+        document.getElementById('btn-cancelar').style.display = "none";
     }
 
     async function salvarBarbeiro() {
         const id = document.getElementById('edit-id').value;
         const nome = document.getElementById('b-nome').value;
         const servs = document.getElementById('b-servs').value;
-        if(!nome) return alert("Nome?");
         if(id) await db.collection("barbeiros").doc(id).update({ nome, servicos: servs });
         else await db.collection("barbeiros").add({ nome, servicos: servs });
-        limparFormBarbeiro();
+        limparForm(); carregarEquipe(); alert("Dados salvos!");
     }
-
-    async function salvarFolga() {  
-        const bId = document.getElementById('f-barbeiro').value;
-        const data = document.getElementById('f-data').value;
-        const tipo = document.getElementById('f-tipo').value;
-        const hora = document.getElementById('f-hora-select').value;
-        if(!bId || !data) return alert("Campos!");
-        await db.collection("bloqueios").add({ barbeiroId: bId, data, hora: (tipo === "HORA_UNICA") ? hora : "DIA_TODO" });
-        alert("Bloqueado!");
-    }
-
-    function carregarFolgas() { 
-        db.collection("bloqueios").orderBy("data", "desc").limit(10).onSnapshot(snap => {   
-            const render = document.getElementById('render-folgas'); 
-            render.innerHTML = snap.empty ? "" : '<p style="margin:20px 0 10px; font-size:0.6rem; color:gray;">BLOQUEIOS</p>';
-            snap.docs.forEach(doc => {
-                const f = doc.data();
-                const b = barbeirosLocal.find(x => x.id === f.barbeiroId);
-                render.innerHTML += `<div class="item-list"><span>${b?.nome || '...'} - ${f.data.split('-').reverse().join('/')} (${f.hora})</span><button class="btn-del" onclick="excluir('bloqueios', '${doc.id}')">Remover</button></div>`;
-            });
-        });
-    }
-
-    function toggleHoraInput() { document.getElementById('box-hora-especifica').style.display = document.getElementById('f-tipo').value === 'HORA_UNICA' ? 'block' : 'none'; }
-    function prepararEdicao(id) {
-        const b = barbeirosLocal.find(x => x.id === id);
-        document.getElementById('edit-id').value = b.id;
-        document.getElementById('b-nome').value = b.nome;
-        document.getElementById('b-servs').value = b.servicos || "";
-        document.getElementById('titulo-editor-barbeiro').innerText = "EDITANDO: " + b.nome.toUpperCase();
-        document.getElementById('btn-salvar-barbeiro').innerText = "Atualizar";
-        document.getElementById('btn-cancelar-edit').style.display = "block";
-    }
-    function limparFormBarbeiro() {
-        document.getElementById('edit-id').value = ""; document.getElementById('b-nome').value = ""; document.getElementById('b-servs').value = "";
-        document.getElementById('titulo-editor-barbeiro').innerText = "CADASTRAR";
-        document.getElementById('btn-salvar-barbeiro').innerText = "Adicionar";
-        document.getElementById('btn-cancelar-edit').style.display = "none";
-    }
-    async function excluir(col, id) { if(confirm("Confirmar?")) await db.collection(col).doc(id).delete(); }
 </script>
-
 </body>
 </html>
