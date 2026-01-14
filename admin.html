@@ -138,11 +138,16 @@
             </div>
 
             <div class="card">
-                <div class="premium-badge">PREMIUM</div>
-                <h3>Assinatura</h3>
-                <p id="txt-restam" style="font-size:0.75rem; color:var(--text-dim); margin-bottom:15px;">Calculando...</p>
-                <button class="btn-outline" onclick="window.open('https://wa.me/5512988600188')">Suporte / Renovação</button>
-            </div>
+    <div class="premium-badge">PREMIUM</div>
+    <h3>Assinatura</h3>
+    <p id="txt-restam" style="font-size:0.75rem; color:var(--text-dim); margin-bottom:15px;">Calculando...</p>
+    
+    <label>Ativar novo período</label>
+    <input type="text" id="input-codigo-ativacao" placeholder="Cole o código único aqui">
+    <button class="btn-action" onclick="validarCodigoAtivacao()" style="margin-bottom:15px;">Ativar +30 Dias</button>
+    
+    <button class="btn-outline" onclick="window.open('https://wa.me/5512988600188')">Suporte / Renovação</button>
+</div>
 
             <div class="card">
                 <h3>Dias de Funcionamento</h3>
@@ -423,6 +428,43 @@
     }
 
     function toggleDia(el) { el.classList.toggle('active'); }
+    
+    async function validarCodigoAtivacao() {
+    const codigo = document.getElementById('input-codigo-ativacao').value.trim();
+    if(!codigo) return alert("Insira um código!");
+
+    try {
+        const ref = db.collection("codigos_ativacao").doc(codigo);
+        const doc = await ref.get();
+
+        if (doc.exists && !doc.data().usado) {
+            // 1. Marcar código como usado
+            await ref.update({ usado: true, dataUso: new Date() });
+
+            // 2. Adicionar 30 dias à assinatura
+            const confRef = db.collection("configuracao").doc("assinatura");
+            const confDoc = await confRef.get();
+            
+            let dataAtual = new Date();
+            if (confDoc.exists) {
+                const dataVenc = confDoc.data().premiumAte.toDate();
+                // Se ainda não venceu, soma à data de vencimento. Se venceu, soma a partir de hoje.
+                dataAtual = dataVenc > new Date() ? dataVenc : new Date();
+            }
+
+            dataAtual.setDate(dataAtual.getDate() + 30);
+            await confRef.set({ premiumAte: dataAtual }, { merge: true });
+
+            alert("Sucesso! +30 dias adicionados à sua barbearia.");
+            document.getElementById('input-codigo-ativacao').value = "";
+            verificarAssinatura();
+        } else {
+            alert("Código inválido ou já utilizado.");
+        }
+    } catch (e) {
+        alert("Erro ao validar. Verifique sua conexão.");
+    }
+}
 </script>
 </body>
 </html>
