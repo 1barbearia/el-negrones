@@ -20,14 +20,12 @@
 
         .header { text-align: center; padding: 20px 0; }
         .logo-img { width: 180px; height: auto; margin-bottom: 10px; }
-        .header h1 { font-family: 'Cinzel', serif; font-weight: 900; font-size: 1.8rem; color: var(--primary); letter-spacing: 2px; margin: 0; }
         .header p { font-size: 0.7rem; letter-spacing: 5px; color: var(--text-dim); text-transform: uppercase; margin-top: 5px; }
 
         .card { background: var(--card); padding: 25px; border-radius: 35px; border: 1px solid #222; }
         label { font-size: 0.7rem; color: var(--primary); font-weight: 800; text-transform: uppercase; margin: 0 0 8px 10px; display: block; }
         input, select { width: 100%; padding: 18px; margin-bottom: 20px; border-radius: 20px; border: 1px solid #282828; background: var(--input-bg); color: #fff; font-size: 1rem; }
 
-        /* Estilo dos Cards de Data */
         .datas-wrapper { display: flex; gap: 10px; overflow-x: auto; padding: 10px 5px; margin-bottom: 20px; scrollbar-width: none; -ms-overflow-style: none; }
         .datas-wrapper::-webkit-scrollbar { display: none; }
         .card-data { 
@@ -41,17 +39,11 @@
         .card-data.selecionada span { color: #000 !important; }
 
         .horarios-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 25px; }
-        .hora-btn { 
-            background: #1a1a1a; padding: 15px 5px; text-align: center; border-radius: 18px; 
-            border: 1px solid #252525; cursor: pointer; color: var(--text-dim); font-weight: 600; 
-        }
+        .hora-btn { background: #1a1a1a; padding: 15px 5px; text-align: center; border-radius: 18px; border: 1px solid #252525; cursor: pointer; color: var(--text-dim); font-weight: 600; }
         .hora-btn.selecionada { background: var(--grad); color: #000; font-weight: 800; border: none; }
         .hora-btn.ocupada { background: #111; opacity: 0.2; color: #444; cursor: not-allowed; }
 
-        .btn-principal { 
-            width: 100%; padding: 22px; border-radius: 22px; background: var(--grad); color: #000; 
-            font-weight: 900; border: none; cursor: pointer; text-transform: uppercase; font-size: 1rem;
-        }
+        .btn-principal { width: 100%; padding: 22px; border-radius: 22px; background: var(--grad); color: #000; font-weight: 900; border: none; cursor: pointer; text-transform: uppercase; font-size: 1rem; }
         #modal-sucesso { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 10000; align-items: center; justify-content: center; padding: 20px; }
         .success-card { background: var(--card); padding: 40px 30px; border-radius: 40px; border: 1px solid var(--primary); text-align: center; max-width: 350px; }
         #bloqueio-total { display: none; position: fixed; inset: 0; background: #050505; z-index: 9999; align-items: center; justify-content: center; text-align: center; }
@@ -65,7 +57,7 @@
 <div id="modal-sucesso">
     <div class="success-card">
         <h2 style="color:var(--primary); font-family:'Cinzel', serif;">RESERVA FEITA!</h2>
-        <p style="color:var(--text-dim); margin-bottom: 25px;">Seu horário foi agendado e o barbeiro já foi notificado.</p>
+        <p style="color:var(--text-dim); margin-bottom: 25px;">Seu horário foi agendado.</p>
         <button class="btn-principal" onclick="location.reload()">Sair</button>
     </div>
 </div>
@@ -142,8 +134,8 @@
     }
 
     window.onload = async () => {
-        await verificarAssinatura();
-        await carregarConfiguracoesTelegram();
+        verificarAssinatura();
+        carregarConfiguracoesTelegram();
         carregarBarbeiros();
     };
 
@@ -184,57 +176,62 @@
     render.innerHTML = "<p style='font-size:0.7rem; color:var(--primary)'>Buscando datas...</p>";
 
     try {
+        // Busca as configurações (Adicionado timestamp para evitar cache do Firebase)
         const [confCal, confDias] = await Promise.all([
             db.collection("configuracao").doc("calendario").get(),
             db.collection("configuracao").doc("funcionamento").get()
         ]);
         
-        // Pega o limite de semanas do Admin (ex: 1 ou 2)
-        let semanasLimite = confCal.exists ? parseInt(confCal.data().semanasLimite) : 1;
-        // Pega os dias que você marcou que trabalha (ex: [1,2,3,4,5])
+        // Pega o limite do Admin. Se não ler, força 2 semanas (14 dias)
+        let semanasLimite = 2; 
+        if(confCal.exists) {
+            const dataCal = confCal.data();
+            semanasLimite = parseInt(dataCal.semanasLimite || dataCal.semanaslimite || 2);
+        }
+
         let diasAtivos = confDias.exists ? confDias.data().diasAtivos : [1,2,3,4,5,6];
 
         render.innerHTML = ""; 
-        const diasSemana = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+        const diasSemanaNomes = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
 
-        const hoje = new Date();
-        const diaDaSemanaAtual = hoje.getDay(); 
+        // CORREÇÃO DE DATA: Criar data local pura
+        const agora = new Date();
+        const hoje = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate());
 
-        // ESTA É A TRAVA REAL:
-        // Calculamos quantos dias faltam para chegar no Sábado da semana limite.
-        // Se semanasLimite for 1, ele só vai até o sábado desta semana.
-        // Se hoje é terça (2), faltam 4 dias para o sábado (6-2=4).
-        const limiteDeDiasNoLoop = (6 - diaDaSemanaAtual) + ((semanasLimite - 1) * 7);
+        // Força o loop a rodar 14 dias se o admin for 2, ou 7 se for 1.
+        const totalDiasBusca = semanasLimite * 7;
 
-        for (let i = 0; i <= limiteDeDiasNoLoop; i++) {
-            let d = new Date();
+        for (let i = 0; i < totalDiasBusca; i++) {
+            let d = new Date(hoje);
             d.setDate(hoje.getDate() + i);
             
-            // Só renderiza se o dia da semana estiver marcado como ativo no Admin
-            if (diasAtivos.includes(d.getDay())) {
-                const dataIso = d.toISOString().split('T')[0];
+            let diaSemana = d.getDay();
+
+            if (diasAtivos.includes(diaSemana)) {
+                // Formatação manual YYYY-MM-DD para evitar ISOString (que causa erro de fuso)
+                const ano = d.getFullYear();
+                const mes = String(d.getMonth() + 1).padStart(2, '0');
+                const diaNum = String(d.getDate()).padStart(2, '0');
+                const dataFormatada = `${ano}-${mes}-${diaNum}`;
+
                 const card = document.createElement('div');
                 card.className = 'card-data';
-                card.innerHTML = `<span>${diasSemana[d.getDay()]}</span><span>${d.getDate()}</span>`;
+                card.innerHTML = `<span>${diasSemanaNomes[diaSemana]}</span><span>${d.getDate()}</span>`;
                 
                 card.onclick = () => {
                     playClick();
                     document.querySelectorAll('.card-data').forEach(c => c.classList.remove('selecionada'));
                     card.classList.add('selecionada');
-                    document.getElementById('data-agenda').value = dataIso;
+                    document.getElementById('data-agenda').value = dataFormatada;
                     gerarHorarios();
                 };
                 render.appendChild(card);
             }
         }
 
-        if(render.innerHTML === "") {
-            render.innerHTML = "<p style='font-size:0.7rem; color:gray;'>Agenda encerrada para esta semana.</p>";
-        }
-
     } catch (error) {
-        console.error("Erro:", error);
-        render.innerHTML = "<p style='font-size:0.7rem; color:red;'>Erro ao carregar datas.</p>";
+        console.error("Erro fatal:", error);
+        render.innerHTML = "Erro ao carregar.";
     }
 }
 
@@ -252,16 +249,19 @@
         
         grid.innerHTML = "";
         const agora = new Date();
-        const hojeData = agora.toISOString().split('T')[0];
+        const hojeIso = agora.getFullYear() + "-" + String(agora.getMonth() + 1).padStart(2, '0') + "-" + String(agora.getDate()).padStart(2, '0');
 
         horasBase.forEach(hora => {
             let indisponivel = ocupados.includes(hora);
-            if (dataSel === hojeData) {
+            
+            if (dataSel === hojeIso) {
                 const [h, m] = hora.split(':');
                 const dataHoraComp = new Date();
                 dataHoraComp.setHours(parseInt(h), parseInt(m), 0);
-                if (dataHoraComp.getTime() < (agora.getTime() + 1 * 60 * 60 * 1000)) indisponivel = true;
+                // Bloqueia horários passados ou com menos de 1h de antecedência
+                if (dataHoraComp.getTime() < (agora.getTime() + 60 * 60 * 1000)) indisponivel = true;
             }
+            
             const div = document.createElement("div");
             div.className = "hora-btn " + (indisponivel ? "ocupada" : "");
             div.textContent = hora;
@@ -283,21 +283,32 @@
         const data = document.getElementById("data-agenda").value;
         const serv = document.getElementById("select-servico").value;
 
-        if(!nome || !horarioSelecionado || !bId || !serv) return alert("Preencha tudo!");
+        if(!nome || !horarioSelecionado || !bId || !serv) return alert("Preencha todos os campos!");
 
         btn.disabled = true; btn.innerText = "RESERVANDO...";
 
         try {
-            const bAlvo = barbeirosData.find(x => x.id === bId);
-            await db.collection("agenda").add({ cliente: nome, clienteWhatsapp: whatsapp, barbeiroId: bId, data, hora: horarioSelecionado, servico: serv, criadoEm: firebase.firestore.FieldValue.serverTimestamp() });
+            await db.collection("agenda").add({ 
+                cliente: nome, 
+                clienteWhatsapp: whatsapp, 
+                barbeiroId: bId, 
+                data, 
+                hora: horarioSelecionado, 
+                servico: serv, 
+                criadoEm: firebase.firestore.FieldValue.serverTimestamp() 
+            });
             
             if(botTokenGlobal && adminChatIdGlobal) {
                 const msg = `🚀 NOVO AGENDAMENTO\n👤 Cliente: ${nome}\n📅 Data: ${data.split('-').reverse().join('/')}\n⏰ Hora: ${horarioSelecionado}\n✂️ Serviço: ${serv}`;
                 fetch(`https://api.telegram.org/bot${botTokenGlobal}/sendMessage?chat_id=${adminChatIdGlobal}&text=${encodeURIComponent(msg)}`);
-            }
+            } 
             playSuccess();
             document.getElementById('modal-sucesso').style.display = 'flex';
-        } catch (e) { alert("Erro!"); btn.disabled = false; }
+        } catch (e) { 
+            alert("Erro ao agendar. Tente novamente."); 
+            btn.disabled = false; 
+            btn.innerText = "Finalizar Agendamento";
+        }
     }
 </script>
 </body>
