@@ -419,29 +419,43 @@ function bloquearSistema() {
 }
 
     async function validarCodigoAtivacao() {
-        const codigo = document.getElementById('input-codigo-ativacao').value.trim();
+        const codigo = document.getElementById('input-codigo-ativacao').value.trim(); 
         if(!codigo) return alert("Insira um código!");
         try {
             const ref = db.collection("codigos_ativacao").doc(codigo);
             const doc = await ref.get();
+            
             if (doc.exists && !doc.data().usado) {
-                await ref.update({ usado: true, dataUso: new Date() });
+                // Marca o código como usado
+                await ref.update({ usado: true, dataUso: new Date() }); 
+                
                 const confRef = db.collection("configuracao").doc("assinatura");
                 const confDoc = await confRef.get();
+                
                 let dataAtual = new Date();
+                
                 if (confDoc.exists) {
                     const dataVenc = confDoc.data().premiumAte.toDate();
+                    // Se ainda não venceu, soma a partir do vencimento. Se venceu, soma a partir de hoje.
                     dataAtual = dataVenc > new Date() ? dataVenc : new Date();
                 }
+                
                 dataAtual.setDate(dataAtual.getDate() + 30);
+                
                 await confRef.set({ premiumAte: dataAtual }, { merge: true });
-                alert("Sucesso! +30 dias adicionados.");
-                document.getElementById('input-codigo-ativacao').value = "";
-                verificarAssinatura();
+                
+                alert("Sucesso! +30 dias adicionados. O sistema será reiniciado.");
+                
+                // ATUALIZAÇÃO AUTOMÁTICA DA PÁGINA
+                location.reload(); 
+                
             } else {
-                alert("Código inválido.");
+                alert("Código inválido ou já utilizado.");
             }
-        } catch (e) { alert("Erro ao validar."); }
+        } catch (e) { 
+            console.error(e);
+            alert("Erro ao validar o código."); 
+        }
     }
 
     async function limparAgendamentosAntigos() {
