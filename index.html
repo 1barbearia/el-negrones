@@ -373,8 +373,12 @@
                 duracao, criadoEm: new Date() 
             });
 
-            // --- DISPARA NOTIFICAÇÃO ---
-            enviarNotificacaoTelegram(nome, data, horarioSelecionado, partes[0].toUpperCase());
+            // --- BUSCA O NOME DO BARBEIRO PARA A NOTIFICAÇÃO ---
+            const barbeiroObj = barbeirosData.find(b => b.id === bId);
+            const nomeBarbeiro = barbeiroObj ? barbeiroObj.nome : "Profissional";
+
+            // DISPARA NOTIFICAÇÃO (Agora com 5 parâmetros)
+            enviarNotificacaoTelegram(nome, data, horarioSelecionado, partes[0].toUpperCase(), nomeBarbeiro);
 
             document.getElementById('modal-sucesso').style.display = 'flex';
         } catch (e) {
