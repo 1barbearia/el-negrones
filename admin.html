@@ -515,12 +515,49 @@ function bloquearSistema() {
     }
 
     async function limparAgendamentosAntigos() {
-        const hoje = new Date().toISOString().split('T')[0];
-        const snap = await db.collection("agenda").where("data", "<", hoje).get();
-        const batch = db.batch();
-        snap.forEach(doc => batch.delete(doc.ref));
+    const agora = new Date();
+    const hoje = agora.toISOString().split('T')[0];
+    
+    // 1. Pega agendamentos de dias anteriores (Limpeza Pesada)
+    const snapAntigos = await db.collection("agenda").where("data", "<", hoje).get();
+    
+    // 2. Pega agendamentos de hoje para verificar o horário
+    const snapHoje = await db.collection("agenda").where("data", "==", hoje).get();
+    
+    const batch = db.batch();
+    let deletados = 0;
+
+    // Deleta dias passados
+    snapAntigos.forEach(doc => {
+        batch.delete(doc.ref);
+        deletados++;
+    });
+
+    // Verifica horários de hoje
+    snapHoje.forEach(doc => {
+        const ag = doc.data();
+        if (ag.hora) {
+            // Cria um objeto de data para o agendamento: "YYYY-MM-DDTHH:mm"
+            const [hora, minuto] = ag.hora.split(':');
+            const dataAgendamento = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate(), hora, minuto);
+            
+            // Diferença em milissegundos
+            const diffMs = agora - dataAgendamento;
+            const diffMinutos = Math.floor(diffMs / 60000);
+
+            // Se passou de 65 minutos, adiciona ao batch de exclusão
+            if (diffMinutos >= 65) {
+                batch.delete(doc.ref);
+                deletados++;
+            }
+        }
+    });
+
+    if (deletados > 0) {
         await batch.commit();
+        console.log(`${deletados} agendamentos expirados foram removidos.`);
     }
+}
 
     function switchTab(tab, el) {
         document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
