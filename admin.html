@@ -188,17 +188,17 @@
     window.onload = () => { init(); };
 
     async function init() {
-        await carregarEquipe();
-        carregarAgenda();
-        gerarCheckboxesFolga();
-        carregarDiasAtivos();
-        carregarFolgas();
-        carregarConfigBot();
-        verificarAssinatura();
-        carregarConfigSemanas();
-        limparAgendamentosAntigos();
-        document.getElementById('f-data').value = new Date().toISOString().split('T')[0];
-    }
+    await verificarAssinatura(); // Mova para o topo
+    await carregarEquipe();
+    carregarAgenda();
+    gerarCheckboxesFolga();
+    carregarDiasAtivos();
+    carregarFolgas();
+    carregarConfigBot();
+    carregarConfigSemanas();
+    limparAgendamentosAntigos();
+    document.getElementById('f-data').value = new Date().toISOString().split('T')[0];
+}
 
     function carregarAgenda() {
     const bId = document.getElementById('filtro-barbeiro-agenda').value;
@@ -351,7 +351,7 @@
         if(doc.exists) document.getElementById('conf-semanas').value = doc.data().semanasLimite || 1;
     }
 
-    async function salvarDias() {
+    async function salvarDias() { 
         const ativos = Array.from(document.querySelectorAll('.dia-chip.active')).map(el => parseInt(el.dataset.day));
         await db.collection("configuracao").doc("funcionamento").set({ diasAtivos: ativos }, {merge: true});
         alert("Dias atualizados!");
@@ -383,12 +383,40 @@
     }
 
     async function verificarAssinatura() {
-        const doc = await db.collection("configuracao").doc("assinatura").get(); 
-        if(doc.exists) {
-            const resta = Math.ceil((doc.data().premiumAte.toDate() - new Date()) / (1000*60*60*24));
-            document.getElementById('txt-restam').innerHTML = resta > 0 ? `Vence em ${resta} dias` : `Expirado`;
+    const doc = await db.collection("configuracao").doc("assinatura").get(); 
+    if(doc.exists) {
+        const dataVencimento = doc.data().premiumAte.toDate();
+        const hoje = new Date();
+        const resta = Math.ceil((dataVencimento - hoje) / (1000*60*60*24));
+        
+        const txtRestam = document.getElementById('txt-restam');
+        txtRestam.innerHTML = resta > 0 ? `Vence em ${resta} dias` : `Expirado`;
+
+        // Lógica de Bloqueio
+        if (resta <= 0) {
+            bloquearSistema();
         }
     }
+}
+
+function bloquearSistema() {
+    // 1. Esconde todos os botões da Tab Bar, exceto o de Ajustes (config)
+    const tabs = document.querySelectorAll('.tab-btn');
+    tabs.forEach(tab => {
+        const label = tab.innerText.toUpperCase();
+        if (!label.includes("AJUSTES")) {
+            tab.style.display = 'none';
+        }
+    });
+
+    // 2. Força a abertura da aba de Ajustes
+    const btnConfig = document.querySelector('.tab-btn:last-child');
+    switchTab('config', btnConfig);
+
+    // 3. (Opcional) Adiciona um aviso visual no topo
+    const renderAgenda = document.getElementById('render-agenda');
+    renderAgenda.innerHTML = '<p style="text-align:center; padding:50px; color:var(--danger); font-weight:bold;">SISTEMA BLOQUEADO: RENOVE SUA ASSINATURA.</p>';
+}
 
     async function validarCodigoAtivacao() {
         const codigo = document.getElementById('input-codigo-ativacao').value.trim();
