@@ -183,28 +183,35 @@
     }
 
     // --- NOVA FUNÇÃO DO TELEGRAM ---
-    async function enviarNotificacaoTelegram(nome, data, hora, servico) {
-        try {
-            const docBot = await db.collection("configuracao").doc("telegram").get();
-            if (!docBot.exists) return;
+    async function enviarNotificacaoTelegram(nome, data, hora, servico, barbeiro) {
+    try {
+        const docBot = await db.collection("configuracao").doc("telegram").get();
+        if (!docBot.exists) return;
 
-            const { token, chatId } = docBot.data();
-            if (!token || !chatId) return;
+        const { token, chatId } = docBot.data();
+        if (!token || !chatId) return;
 
-            const dataBr = data.split('-').reverse().join('/');
-            const mensagem = `<b>✂️ NOVO AGENDAMENTO</b>\n\n` +
-                             `<b>👤 Cliente:</b> ${nome.toUpperCase()}\n` +
-                             `<b>📅 Data:</b> ${dataBr}\n` +
-                             `<b>⏰ Horário:</b> ${hora}\n` +
-                             `<b>⚡ Serviço:</b> ${servico}`;
+        const dataBr = data.split('-').reverse().join('/');
+        const mensagem = `<b>✂️ NOVO AGENDAMENTO</b>\n\n` +
+                         `<b>👤 Cliente:</b> ${nome.toUpperCase()}\n` +
+                         `<b>📅 Data:</b> ${dataBr}\n` +
+                         `<b>⏰ Horário:</b> ${hora}\n` +
+                         `<b>🧔 Barbeiro:</b> ${barbeiro.toUpperCase()}\n` +
+                         `<b>⚡ Serviço:</b> ${servico}`;
 
-            await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ chat_id: chatId, text: mensagem, parse_mode: 'HTML' })
-            });
-        } catch (e) { console.error("Erro Telegram:", e); }
+        await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                chat_id: chatId, 
+                text: mensagem, 
+                parse_mode: 'HTML' 
+            })
+        });
+    } catch (e) { 
+        console.error("Erro Telegram:", e); 
     }
+}
     // -------------------------------
 
     const mascarar = (el) => {
