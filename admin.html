@@ -367,20 +367,37 @@
         }
     }
 
-    async function salvarConfigBot() {
-        const token = document.getElementById('conf-telegram-token').value;
-        const chat = document.getElementById('conf-telegram-chatid').value;
-        await db.collection("configuracao").doc("telegram").set({ token, chatId: chat }, {merge: true});
-        alert("Bot Salvo!");
-    }
+    // Substitua as funções correspondentes no seu <script>
+async function salvarConfigBot() {
+    const token = document.getElementById('conf-telegram-token').value.trim();
+    const chat = document.getElementById('conf-telegram-chatid').value.trim();
+    
+    if(!token || !chat) return alert("Preencha ambos os campos do Bot!");
 
-    async function carregarConfigBot() {
+    try {
+        await db.collection("configuracao").doc("telegram").set({ 
+            token: token, 
+            chatId: chat,
+            ultimaAtualizacao: new Date()
+        }, {merge: true});
+        alert("Configurações do Telegram salvas com sucesso!");
+    } catch (e) {
+        alert("Erro ao salvar configurações do Bot.");
+    }
+}
+
+async function carregarConfigBot() {
+    try {
         const doc = await db.collection("configuracao").doc("telegram").get();
         if(doc.exists) {
-            document.getElementById('conf-telegram-token').value = doc.data().token || "";
-            document.getElementById('conf-telegram-chatid').value = doc.data().chatId || "";
+            const data = doc.data();
+            document.getElementById('conf-telegram-token').value = data.token || "";
+            document.getElementById('conf-telegram-chatid').value = data.chatId || "";
         }
+    } catch (e) {
+        console.error("Erro ao carregar config do bot:", e);
     }
+}
 
     async function verificarAssinatura() {
     const doc = await db.collection("configuracao").doc("assinatura").get(); 
