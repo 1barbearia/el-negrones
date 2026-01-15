@@ -203,28 +203,35 @@
     function carregarAgenda() {
     const bId = document.getElementById('filtro-barbeiro-agenda').value;
     const render = document.getElementById('render-agenda');
+    
     if (unsubscribeAgenda) unsubscribeAgenda();
     
+    // Buscamos apenas ordenando por data/hora para evitar erro de índice do Firebase
     let query = db.collection("agenda").orderBy("data", "asc").orderBy("hora", "asc");
-    if(bId) query = query.where("barbeiroId", "==", bId);
 
     unsubscribeAgenda = query.onSnapshot(snap => {
-        render.innerHTML = snap.empty ? '<p style="text-align:center; padding:50px; color:gray; font-size:0.8rem;">Sem agendamentos.</p>' : "";
+        render.innerHTML = "";
+        let temAgendamento = false;
+
         snap.forEach(doc => {
             const ag = doc.data();
             
+            // FILTRO LOCAL: Se o filtro estiver ativo e o ID não bater, ignora este item
+            if (bId && bId !== "" && ag.barbeiroId !== bId) {
+                return; 
+            }
+
+            temAgendamento = true;
             const barbeiroObj = barbeirosCache.find(x => x.id === ag.barbeiroId);
             const nomeBarbeiro = barbeiroObj ? barbeiroObj.nome : "Profissional";
             
-            // Extrai apenas o preço da string original salva
+            // Limpeza do preço e nome do serviço
             let precoExtraido = "";
             if (ag.servico) {
-                const matchPreco = ag.servico.match(/R\$\s?\d+,\d+/);
+                const matchPreco = ag.servico.match(/R\$\s?\d+,\d+/) || ag.servico.match(/\d+,\d+/);
                 precoExtraido = matchPreco ? matchPreco[0] : "";
             }
-
-            // Limpa o nome do serviço para não repetir o preço no texto
-            const nomeServicoLimpo = ag.servico.split('❯')[0].split('[')[0].split('•')[0].split('│')[0].trim();
+            const nomeServicoLimpo = ag.servico.split('-')[0].split('•')[0].trim();
 
             render.innerHTML += `
             <div class="card">
@@ -232,9 +239,7 @@
                     <span class="agenda-date" style="color:var(--primary); font-weight:800; font-size:0.85rem;">🗓️ ${ag.data.split('-').reverse().join('/')}</span>
                     <div class="agenda-time">${ag.hora}</div>
                 </div>
-                
                 <div class="agenda-client">${(ag.cliente || "Cliente").toUpperCase()}</div>
-                
                 <div class="agenda-details">
                     <div class="detail-item" style="grid-column: span 2;">
                         <span class="detail-label">Serviço Selecionado</span>
@@ -243,19 +248,21 @@
                             <span style="color:var(--success); margin-left:8px; font-weight:900;">${precoExtraido}</span>
                         </span>
                     </div>
-                    
                     <div class="detail-item" style="grid-column: span 2; margin-top: 10px; border-top: 1px solid #222; padding-top: 10px;">
                         <span class="detail-label">Barbeiro Responsável</span>
                         <span class="detail-value" style="color:var(--primary); font-size:0.9rem;">✂️ ${nomeBarbeiro.toUpperCase()}</span>
                     </div>
                 </div>
-                
                 <div class="agenda-footer">
                     <button class="btn-wpp" onclick="window.open('https://wa.me/55${ag.whatsapp ? ag.whatsapp.replace(/\D/g,'') : ''}')">📲 WHATSAPP</button>
                     <button class="btn-done" onclick="excluir('agenda', '${doc.id}')">CONCLUIR</button>
                 </div>
             </div>`;
         });
+
+        if (!temAgendamento) {
+            render.innerHTML = '<p style="text-align:center; padding:50px; color:gray; font-size:0.8rem;">Sem agendamentos para este filtro.</p>';
+        }
     });
 }
 
