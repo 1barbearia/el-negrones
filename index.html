@@ -268,8 +268,26 @@ select option {
         grid.innerHTML = "";
         const horas = ["09:00","09:30","10:00","10:30","11:00","11:30","12:00","12:30","13:00","13:30","14:00","14:30","15:00","15:30","16:00","16:30","17:00","17:30","18:00","18:30","19:00","19:30"];
         
+        // Lógica para bloquear horários passados + 60min
+        const agora = new Date();
+        const hojeISO = `${agora.getFullYear()}-${String(agora.getMonth()+1).padStart(2,'0')}-${String(agora.getDate()).padStart(2,'0')}`;
+        
         horas.forEach((h, idx) => {
             let isOcupado = ocupados.includes(h);
+
+            // Se a data selecionada for HOJE, verifica o relógio
+            if (data === hojeISO) {
+                const [hHora, hMin] = h.split(':').map(Number);
+                const dataHoraOpcao = new Date();
+                dataHoraOpcao.setHours(hHora, hMin, 0, 0);
+                
+                // Margem de 60 minutos (agora + 60min)
+                const margemSeguranca = new Date(agora.getTime() + 60 * 60000);
+                
+                if (dataHoraOpcao < margemSeguranca) {
+                    isOcupado = true;
+                }
+            }
 
             // Bloqueia se o serviço de 60min não couber (se o próximo horário estiver ocupado)
             if(!isOcupado && duracaoAtual > 30) {
