@@ -14,17 +14,14 @@
             --grad: linear-gradient(135deg, #c5a059 0%, #a68549 100%); 
         }
         
-        /* Melhora o visual do texto dentro dos campos de seleção */
-select option {
-    background: #141414;
-    color: #fff;
-    padding: 10px;
-}
-#select-servico {
-    font-family: 'Inter', sans-serif;
-    letter-spacing: 0.5px;
-    font-weight: 600;
-}
+        /* Estilos de Bloqueio */
+        .bloqueio-container { text-align: center; padding: 40px 10px; animation: fadeIn 0.8s ease; }
+        .bloqueio-icon { font-size: 3rem; margin-bottom: 20px; display: block; }
+        .bloqueio-titulo { font-family: 'Cinzel', serif; color: var(--primary); font-size: 1.5rem; margin-bottom: 10px; }
+        .bloqueio-texto { color: var(--text-dim); font-size: 0.9rem; line-height: 1.6; margin-bottom: 25px; }
+
+        select option { background: #141414; color: #fff; padding: 10px; }
+        #select-servico { font-family: 'Inter', sans-serif; letter-spacing: 0.5px; font-weight: 600; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
         body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 10px; display: flex; justify-content: center; overflow-x: hidden; }
         .container { width: 100%; max-width: 480px; padding-bottom: 50px; animation: fadeIn 0.8s ease; }
@@ -65,13 +62,10 @@ select option {
             animation: shimmer 3s infinite;
         }
         @keyframes shimmer { 0% { left: -60%; } 30% { left: 140%; } 100% { left: 140%; } }
-
         .btn-cancelar-link { background: none; border: none; color: var(--text-dim); font-size: 0.65rem; font-weight: 700; text-transform: uppercase; cursor: pointer; width: 100%; margin-top: 15px; text-decoration: underline; }
         
         #modal-sucesso, #modal-cancelar { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 10000; align-items: center; justify-content: center; padding: 20px; }
         .success-card { background: var(--card); padding: 40px 30px; border-radius: 40px; border: 1px solid var(--primary); text-align: center; max-width: 350px; width: 100%; }
-        
-        
     </style>
 </head>
 <body>
@@ -88,53 +82,51 @@ select option {
     <div class="success-card">
         <h3 style="color:var(--primary); font-family:'Cinzel'; margin-bottom: 15px;">CANCELAR AGENDAMENTO</h3>
         <p style="font-size: 0.7rem; color: var(--text-dim); margin-bottom: 20px;">Confirme os dados para cancelar.</p>
-        
         <label style="margin-left:0; text-align:left;">WhatsApp do agendamento</label>
         <input type="tel" id="cancel-zap" placeholder="(00) 00000-0000" style="text-align:center;">
-        
         <label style="margin-left:0; text-align:left;">Data agendada</label>
         <input type="date" id="cancel-data" style="text-align:center; color-scheme: dark;">
-        
         <button class="btn-principal" onclick="processarCancelamento()">Verificar e Cancelar</button>
         <button class="btn-cancelar-link" onclick="document.getElementById('modal-cancelar').style.display='none'">Voltar</button>
     </div>
 </div>
 
-<div class="container">
+<div class="container" id="main-container">
     <div class="header">
         <img src="logo_insta.png" alt="Logo" class="logo-img">
         <p>Criando seu estilo</p>
     </div>
 
-    <div class="card">
-        <label>Quem vai cuidar do seu estilo?</label>
-        <select id="select-barbeiro" onchange="atualizarServicos()">
-            <option value="">Carregando profissionais...</option>
-        </select>
-        
-        <label>O que vamos fazer hoje?</label>
-        <select id="select-servico" onchange="resetarHorarios()">
-            <option value="">Escolha o profissional primeiro</option>
-        </select>
-        
-        <label>Escolha o dia (Arraste 👉)</label>
-        <div class="datas-wrapper" id="render-datas">
-            <p style="font-size: 0.75rem; color: #555; padding: 10px;">Aguardando profissional...</p>
+    <div id="conteudo-agendamento">
+        <div class="card">
+            <label>Quem vai cuidar do seu estilo?</label>
+            <select id="select-barbeiro" onchange="atualizarServicos()">
+                <option value="">Carregando profissionais...</option>
+            </select>
+            
+            <label>O que vamos fazer hoje?</label>
+            <select id="select-servico" onchange="resetarHorarios()">
+                <option value="">Escolha o profissional primeiro</option>
+            </select>
+            
+            <label>Escolha o dia (Arraste 👉)</label>
+            <div class="datas-wrapper" id="render-datas">
+                <p style="font-size: 0.75rem; color: #555; padding: 10px;">Aguardando profissional...</p>
+            </div>
+            <input type="hidden" id="data-agenda">
+            
+            <label>Horários Disponíveis</label>
+            <div class="horarios-grid" id="grid-horarios"></div>
+            
+            <label>Seu Nome</label>
+            <input type="text" id="nome-cliente" placeholder="Como podemos te chamar?">
+            
+            <label>WhatsApp</label>
+            <input type="tel" id="whatsapp-cliente" placeholder="(00) 00000-0000" maxlength="15">
+            
+            <button class="btn-principal" id="btn-confirmar" onclick="confirmarAgendamento()">Finalizar Agendamento</button>
+            <button class="btn-cancelar-link" onclick="document.getElementById('modal-cancelar').style.display='flex'">Cancelar meu agendamento</button>
         </div>
-        <input type="hidden" id="data-agenda">
-        
-        <label>Horários Disponíveis</label>
-        <div class="horarios-grid" id="grid-horarios"></div>
-        
-        <label>Seu Nome</label>
-        <input type="text" id="nome-cliente" placeholder="Como podemos te chamar?">
-        
-        <label>WhatsApp</label>
-        <input type="tel" id="whatsapp-cliente" placeholder="(00) 00000-0000" maxlength="15">
-        
-        <button class="btn-principal" id="btn-confirmar" onclick="confirmarAgendamento()">Finalizar Agendamento</button>
-        
-        <button class="btn-cancelar-link" onclick="document.getElementById('modal-cancelar').style.display='flex'">Cancelar meu agendamento</button>
     </div>
 </div>
 
@@ -153,6 +145,46 @@ select option {
     let barbeirosData = [];
     let horarioSelecionado = null;
 
+    // INÍCIO: Lógica de Proteção
+    window.onload = async () => {
+        const ativo = await verificarAssinatura();
+        if(ativo) {
+            carregarBarbeiros();
+        }
+    };
+
+    async function verificarAssinatura() {
+        try {
+            const doc = await db.collection("configuracao").doc("assinatura").get();
+            if (doc.exists) {
+                const vencimento = doc.data().premiumAte.toDate();
+                if (vencimento < new Date()) {
+                    bloquearPagina();
+                    return false;
+                }
+                return true;
+            }
+            return true;
+        } catch (e) {
+            bloquearPagina();
+            return false;
+        }
+    }
+
+    function bloquearPagina() {
+        document.getElementById('conteudo-agendamento').innerHTML = `
+            <div class="card bloqueio-container">
+                <span class="bloqueio-icon">📅</span>
+                <h2 class="bloqueio-titulo">AGENDA INDISPONÍVEL</h2>
+                <p class="bloqueio-texto">
+                    No momento, não estamos aceitando novos agendamentos online.<br>
+                </p>
+                
+            </div>
+        `;
+    }
+    // FIM: Lógica de Proteção
+
     const mascarar = (el) => {
         el.addEventListener('input', (e) => {
             let v = e.target.value.replace(/\D/g, '');
@@ -167,48 +199,39 @@ select option {
     mascarar(document.getElementById('whatsapp-cliente'));
     mascarar(document.getElementById('cancel-zap'));
 
-    window.onload = () => carregarBarbeiros();
-
     async function carregarBarbeiros() {
-        const snap = await db.collection("barbeiros").get();
-        barbeirosData = snap.docs.map(doc => ({id: doc.id, ...doc.data()}));
-        const sB = document.getElementById("select-barbeiro");
-        sB.innerHTML = '<option value="">Selecione o Barbeiro</option>';
-        barbeirosData.forEach(b => sB.innerHTML += `<option value="${b.id}">${b.nome}</option>`);
+        try {
+            const snap = await db.collection("barbeiros").get();
+            barbeirosData = snap.docs.map(doc => ({id: doc.id, ...doc.data()}));
+            const sB = document.getElementById("select-barbeiro");
+            sB.innerHTML = '<option value="">Selecione o Barbeiro</option>';
+            barbeirosData.forEach(b => sB.innerHTML += `<option value="${b.id}">${b.nome}</option>`);
+        } catch(e) { console.error(e); }
     }
 
     function atualizarServicos() {
-    const bId = document.getElementById("select-barbeiro").value;
-    const b = barbeirosData.find(x => x.id === bId);
-    const sS = document.getElementById("select-servico");
-    
-    sS.innerHTML = '<option value="">⚡ SELECIONE O SERVIÇO</option>';
-    
-    if (b && b.servicos) {
-        const linhas = b.servicos.split('\n');
-        
-        linhas.forEach(linha => {
-            if (linha.trim()) {
-                const partes = linha.split(' - ');
-                
-                if (partes.length === 3) {
-                    const nome = partes[0].trim().toUpperCase();
-                    const preco = partes[1].trim();
-                    const tempo = partes[2].trim();
-                    
-                    // Formatação: NOME • R$ 50,00 • ~30 MIN
-                    // O uso do ponto médio (•) é mais sofisticado que barras ou hifens
-                    const textoFormatado = `${nome}  •  R$ ${preco},00  •  ~${tempo} MIN`;
-                    
-                    sS.innerHTML += `<option value="${linha.trim()}">${textoFormatado}</option>`;
-                } else {
-                    sS.innerHTML += `<option value="${linha.trim()}">${linha.trim().toUpperCase()}</option>`;
+        const bId = document.getElementById("select-barbeiro").value;
+        const b = barbeirosData.find(x => x.id === bId);
+        const sS = document.getElementById("select-servico");
+        sS.innerHTML = '<option value="">⚡ SELECIONE O SERVIÇO</option>';
+        if (b && b.servicos) {
+            const linhas = b.servicos.split('\n');
+            linhas.forEach(linha => {
+                if (linha.trim()) {
+                    const partes = linha.split(' - ');
+                    if (partes.length === 3) {
+                        const nome = partes[0].trim().toUpperCase();
+                        const preco = partes[1].trim();
+                        const tempo = partes[2].trim();
+                        sS.innerHTML += `<option value="${linha.trim()}">${nome}  •  R$ ${preco},00  •  ~${tempo} MIN</option>`;
+                    } else {
+                        sS.innerHTML += `<option value="${linha.trim()}">${linha.trim().toUpperCase()}</option>`;
+                    }
                 }
-            }
-        });
+            });
+        }
+        renderizarDatasPremium();
     }
-    renderizarDatasPremium();
-}
 
     function resetarHorarios() {
         horarioSelecionado = null;
@@ -249,56 +272,38 @@ select option {
         const bId = document.getElementById("select-barbeiro").value;
         const servTexto = document.getElementById("select-servico").value;
         if(!servTexto) { grid.innerHTML = "<p style='grid-column:1/-1; font-size:0.7rem; color:orange;'>Escolha o serviço primeiro.</p>"; return; }
-        
         grid.innerHTML = "Verificando...";
-        
         const [agSnap, blSnap] = await Promise.all([
             db.collection("agenda").where("data", "==", data).where("barbeiroId", "==", bId).get(),
             db.collection("bloqueios").where("data", "==", data).where("barbeiroId", "==", bId).get()
         ]);
-        
         let ocupados = [...blSnap.docs.map(d => d.data().hora)];
         agSnap.docs.forEach(doc => {
             const ag = doc.data();
             ocupados.push(ag.hora);
             if(parseInt(ag.duracao) > 30) ocupados.push(calcularProximo(ag.hora));
         });
-
         const duracaoAtual = parseInt(servTexto.split(' - ')[2]) || 30;
         grid.innerHTML = "";
         const horas = ["09:00","09:30","10:00","10:30","11:00","11:30","12:00","12:30","13:00","13:30","14:00","14:30","15:00","15:30","16:00","16:30","17:00","17:30","18:00","18:30","19:00","19:30"];
-        
-        // Lógica para bloquear horários passados + 60min
         const agora = new Date();
         const hojeISO = `${agora.getFullYear()}-${String(agora.getMonth()+1).padStart(2,'0')}-${String(agora.getDate()).padStart(2,'0')}`;
-        
         horas.forEach((h, idx) => {
             let isOcupado = ocupados.includes(h);
-
-            // Se a data selecionada for HOJE, verifica o relógio
             if (data === hojeISO) {
                 const [hHora, hMin] = h.split(':').map(Number);
                 const dataHoraOpcao = new Date();
                 dataHoraOpcao.setHours(hHora, hMin, 0, 0);
-                
-                // Margem de 60 minutos (agora + 60min)
                 const margemSeguranca = new Date(agora.getTime() + 60 * 60000);
-                
-                if (dataHoraOpcao < margemSeguranca) {
-                    isOcupado = true;
-                }
+                if (dataHoraOpcao < margemSeguranca) isOcupado = true;
             }
-
-            // Bloqueia se o serviço de 60min não couber (se o próximo horário estiver ocupado)
             if(!isOcupado && duracaoAtual > 30) {
                 const prox = horas[idx+1];
                 if(!prox || ocupados.includes(prox)) isOcupado = true;
             }
-
             const btn = document.createElement("div");
             btn.className = "hora-btn " + (isOcupado ? "ocupada" : "");
             btn.textContent = h;
-            
             if(!isOcupado) {
                 btn.onclick = () => {
                     document.querySelectorAll(".hora-btn").forEach(e => e.classList.remove("selecionada"));
@@ -317,53 +322,37 @@ select option {
     }
 
     async function confirmarAgendamento() {
-    const nome = document.getElementById("nome-cliente").value;
-    const zap = document.getElementById("whatsapp-cliente").value;
-    const bId = document.getElementById("select-barbeiro").value;
-    const data = document.getElementById("data-agenda").value;
-    const servTexto = document.getElementById("select-servico").value;
-    
-    if(!nome || !horarioSelecionado || !data || !servTexto) {
-        return alert("Por favor, preencha todos os campos!");
+        const nome = document.getElementById("nome-cliente").value;
+        const zap = document.getElementById("whatsapp-cliente").value;
+        const bId = document.getElementById("select-barbeiro").value;
+        const data = document.getElementById("data-agenda").value;
+        const servTexto = document.getElementById("select-servico").value;
+        if(!nome || !horarioSelecionado || !data || !servTexto) return alert("Por favor, preencha todos os campos!");
+        const partes = servTexto.split(' - ');
+        const duracao = parseInt(partes[2]) || 30;
+        const btn = document.getElementById("btn-confirmar");
+        btn.innerText = "RESERVANDO...";
+        btn.disabled = true;
+        try {
+            await db.collection("agenda").add({ 
+                cliente: nome.toUpperCase(), whatsapp: zap, barbeiroId: bId, data, 
+                hora: horarioSelecionado, servico: partes[0].toUpperCase(), 
+                duracao, criadoEm: new Date() 
+            });
+            document.getElementById('modal-sucesso').style.display = 'flex';
+        } catch (e) {
+            alert("Erro ao salvar. Tente novamente.");
+            btn.innerText = "FINALIZAR AGENDAMENTO";
+            btn.disabled = false;
+        }
     }
-    
-    const partes = servTexto.split(' - ');
-    const duracao = parseInt(partes[2]) || 30;
-    const btn = document.getElementById("btn-confirmar");
-
-    // Feedback visual imediato
-    btn.innerText = "RESERVANDO...";
-    btn.style.opacity = "0.7";
-    btn.disabled = true;
-
-    try {
-        await db.collection("agenda").add({ 
-            cliente: nome.toUpperCase(), 
-            whatsapp: zap, 
-            barbeiroId: bId, 
-            data, 
-            hora: horarioSelecionado, 
-            servico: partes[0].toUpperCase(), 
-            duracao: duracao, 
-            criadoEm: new Date() 
-        });
-        document.getElementById('modal-sucesso').style.display = 'flex';
-    } catch (e) {
-        alert("Erro ao salvar. Tente novamente.");
-        btn.innerText = "FINALIZAR AGENDAMENTO";
-        btn.style.opacity = "1";
-        btn.disabled = false;
-    }
-}
 
     async function processarCancelamento() {
         const zap = document.getElementById("cancel-zap").value;
         const data = document.getElementById("cancel-data").value;
         if(zap.length < 10 || !data) return alert("Informe WhatsApp e Data.");
-        
         const snap = await db.collection("agenda").where("whatsapp", "==", zap).where("data", "==", data).get();
         if(snap.empty) return alert("Agendamento não encontrado.");
-
         if(confirm("Deseja realmente cancelar?")) {
             const batch = db.batch();
             snap.forEach(doc => batch.delete(doc.ref));
