@@ -16,7 +16,7 @@
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
         body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding-bottom: 100px; }
 
-        /* Navegação Superior */
+        /* Barra de Navegação Superior */
         .top-nav-container { padding: 25px 10px; text-align: center; background: linear-gradient(to bottom, #111, transparent); position: sticky; top: 0; z-index: 100; backdrop-filter: blur(10px); }
         .tab-bar { background: rgba(22, 22, 22, 0.7); padding: 6px; border-radius: 20px; display: flex; max-width: 600px; margin: 0 auto; border: 1px solid #222; overflow-x: auto; scrollbar-width: none; }
         .tab-bar::-webkit-scrollbar { display: none; }
@@ -33,7 +33,24 @@
         .btn-action { width: 100%; padding: 18px; border-radius: 18px; background: var(--grad); color: #000; font-weight: 900; border: none; cursor: pointer; text-transform: uppercase; font-size: 0.8rem; margin-top: 10px; }
         .btn-outline { width: 100%; padding: 15px; background: transparent; border: 1px solid #333; color: var(--text-dim); border-radius: 15px; font-weight: 700; font-size: 0.7rem; cursor: pointer; }
 
-        /* Estilos da Agenda */
+        /* Grade de 10 min */
+        .grid-10min { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+        .hora-chip { background: #1a1a1a; padding: 10px 2px; border-radius: 10px; font-size: 0.65rem; text-align: center; border: 1px solid #252525; cursor: pointer; font-weight: 700; color: var(--text-dim); }
+        .hora-chip.active { background: var(--grad); color: #000; border: none; }
+
+        /* Dias Grid */
+        .dias-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 15px; }
+        .dia-chip { background: #1a1a1a; padding: 12px; border-radius: 12px; font-size: 0.7rem; text-align: center; border: 1px solid #252525; cursor: pointer; font-weight: 700; }
+        .dia-chip.active { border-color: var(--primary); color: var(--primary); background: rgba(197, 160, 89, 0.1); }
+
+        /* Lista de Itens (Equipe) - DESIGN ORIGINAL */
+        .item-list { display: flex; justify-content: space-between; align-items: center; padding: 18px 22px; background: #161616; border-radius: 20px; margin-bottom: 12px; border: 1px solid #222; }
+        .item-list b { font-size: 0.9rem; color: #fff; letter-spacing: 0.5px; }
+        .btn-group { display: flex; gap: 12px; }
+        .btn-edit { color: var(--success); background: none; border: none; font-weight: 800; font-size: 0.65rem; cursor: pointer; text-transform: uppercase; }
+        .btn-del { color: var(--danger); background: none; border: none; font-weight: 800; font-size: 0.65rem; cursor: pointer; text-transform: uppercase; }
+
+        /* Agenda - DESIGN ORIGINAL */
         .agenda-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         .agenda-time { background: var(--grad); color: #000; padding: 4px 12px; border-radius: 10px; font-weight: 900; font-size: 0.85rem; }
         .agenda-date { font-size: 0.7rem; color: var(--text-dim); font-weight: 600; }
@@ -41,19 +58,6 @@
         .agenda-details { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 15px 0; border-top: 1px solid #222; border-bottom: 1px solid #222; margin-bottom: 15px; }
         .detail-label { font-size: 0.55rem; color: var(--primary); font-weight: 800; text-transform: uppercase; }
         .detail-value { font-size: 0.8rem; font-weight: 700; color: #eee; }
-
-        /* Grades de Horários e Dias */
-        .grid-10min { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
-        .hora-chip { background: #1a1a1a; padding: 10px 2px; border-radius: 10px; font-size: 0.65rem; text-align: center; border: 1px solid #252525; cursor: pointer; font-weight: 700; color: var(--text-dim); }
-        .hora-chip.active { background: var(--grad); color: #000; border: none; }
-        .dias-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 15px; }
-        .dia-chip { background: #1a1a1a; padding: 12px; border-radius: 12px; font-size: 0.7rem; text-align: center; border: 1px solid #252525; cursor: pointer; font-weight: 700; }
-        .dia-chip.active { border-color: var(--primary); color: var(--primary); background: rgba(197, 160, 89, 0.1); }
-
-        .item-list { display: flex; justify-content: space-between; align-items: center; padding: 15px; background: #1a1a1a; border-radius: 18px; margin-bottom: 10px; border: 1px solid #222; }
-        .btn-group { display: flex; gap: 8px; }
-        .btn-edit { color: var(--success); background: none; border: none; font-weight: 800; font-size: 0.65rem; cursor: pointer; }
-        .btn-del { color: var(--danger); background: none; border: none; font-weight: 800; font-size: 0.65rem; cursor: pointer; }
 
         .premium-badge { position: absolute; top: 15px; right: -30px; background: var(--grad); color: #000; padding: 5px 35px; font-size: 0.5rem; font-weight: 900; transform: rotate(45deg); }
     </style>
@@ -80,18 +84,20 @@
 
         <div id="tab-grade" class="tab-content" style="display:none;">
             <div class="card">
-                <h3>Grade do Profissional</h3>
-                <label>Barbeiro</label>
+                <h3>Configurar Grade</h3>
+                <label>Selecione o Barbeiro</label>
                 <select id="grade-barbeiro-select" onchange="carregarConfigGradeBarbeiro()">
                     <option value="">Escolha um profissional...</option>
                 </select>
                 
                 <div id="grade-controles" style="display:none; margin-top: 20px;">
-                    <label>Semanas Visíveis</label>
+                    <label>Semanas Visíveis para o Cliente</label>
                     <select id="grade-semanas">
-                        <option value="1">1 Semana</option><option value="2">2 Semanas</option>
+                        <option value="1">1 Semana</option>
+                        <option value="2">2 Semanas</option>
                         <option value="4">4 Semanas (1 mês)</option>
                     </select>
+
                     <label>Dias de Trabalho</label>
                     <div class="dias-grid" id="grade-dias">
                         <div class="dia-chip" data-day="1" onclick="toggleElement(this)">Segunda</div>
@@ -102,7 +108,8 @@
                         <div class="dia-chip" data-day="6" onclick="toggleElement(this)">Sábado</div>
                         <div class="dia-chip" data-day="0" onclick="toggleElement(this)">Domingo</div>
                     </div>
-                    <label>Horários (10 em 10 min)</label>
+
+                    <label>Horários Disponíveis (10 em 10 min)</label>
                     <div class="grid-10min" id="render-horarios-grade"></div>
                     <button class="btn-action" onclick="salvarConfigGrade()">Salvar Grade</button>
                 </div>
@@ -110,22 +117,32 @@
         </div>
 
         <div id="tab-equipe" class="tab-content" style="display:none;">
-            <div class="card">
-                <h3 id="titulo-equipe">Novo Profissional</h3>
-                <input type="hidden" id="edit-barbeiro-id">
-                <label>Nome</label>
-                <input id="b-nome" placeholder="Ex: Lucas">
-                <label>Serviços (Nome - Valor - Tempo)</label>
-                <textarea id="b-servs" rows="5" placeholder="Corte - 40 - 30"></textarea>
-                <button class="btn-action" id="btn-salvar-barbeiro" onclick="salvarBarbeiro()">Salvar Barbeiro</button>
-                <button id="btn-cancelar-edit" class="btn-outline" style="display:none; margin-top:10px;" onclick="limparFormEquipe()">CANCELAR</button>
-            </div>
-            <div id="render-equipe"></div>
+    <div class="card">
+        <h3 id="titulo-editor">Gerenciar Time</h3>
+        <input type="hidden" id="edit-id">
+        
+        <label>Nome do Profissional</label>
+        <input id="b-nome" placeholder="Ex: Lucas">
+        
+        <div style="background: rgba(197, 160, 89, 0.1); border: 1px dashed var(--primary); padding: 15px; border-radius: 15px; margin-bottom: 15px;">
+            <label style="margin-left:0; color:var(--primary);">⚠️ PADRÃO DE CADASTRO:</label>
+            <p style="font-size: 0.65rem; color: #fff; margin: 5px 0;">Digite: <b>Nome - Valor - Minutos</b></p>
+            <p style="font-size: 0.6rem; color: var(--text-dim);">Ex: Corte - 40 - 30</p>
+            <p style="font-size: 0.55rem; color: var(--primary); margin-top:5px;">* No site do cliente e na sua agenda, o valor aparecerá como <b>R$ 40,00</b> automaticamente.</p>
         </div>
+
+        <label>Lista de Serviços (um por linha)</label>
+        <textarea id="b-servs" rows="5" placeholder="Corte - 40 - 30&#10;Barba - 30 - 30"></textarea>
+        
+        <button class="btn-action" id="btn-salvar-b" onclick="salvarBarbeiro()">Salvar Profissional</button>
+        <button id="btn-cancelar" class="btn-outline" style="display:none; margin-top:10px;" onclick="limparForm()">CANCELAR EDIÇÃO</button>
+    </div>
+    <div id="render-equipe"></div>
+</div>
 
         <div id="tab-folgas" class="tab-content" style="display:none;">
             <div class="card">
-                <h3>Bloqueio Temporário</h3>
+                <h3>Bloqueio Manual</h3>
                 <label>Barbeiro</label><select id="f-barbeiro"></select>
                 <label>Data</label><input type="date" id="f-data">
                 <div class="grid-10min" id="grid-selecao-folgas"></div>
@@ -143,7 +160,7 @@
             </div>
             <div class="card">
                 <h3>Notificações Bot Telegram</h3>
-                <label>Token do Bot</label>
+                <label>Token</label>
                 <input type="password" id="conf-telegram-token" placeholder="Token">
                 <label>Chat ID</label>
                 <input type="password" id="conf-telegram-chatid" placeholder="Chat ID">
@@ -154,7 +171,7 @@
 </div>
 
 <script>
-    // CONFIGURAÇÃO FIREBASE
+    // FIREBASE
     const firebaseConfig = { 
         apiKey: "AIzaSyC0x8q1N7R70BYhfd2daedBjRKH0qupJiI",
         authDomain: "elnes-720ce.firebaseapp.com",
@@ -188,7 +205,7 @@
         document.getElementById('grid-selecao-folgas').innerHTML = html;
     }
 
-    // --- AGENDA (LÓGICA ORIGINAL) ---
+    // --- AGENDA ---
     function carregarAgenda() {
         const bId = document.getElementById('filtro-barbeiro-agenda').value;
         db.collection("agenda").orderBy("data", "asc").orderBy("hora", "asc").onSnapshot(snap => {
@@ -214,7 +231,7 @@
         });
     }
 
-    // --- EQUIPE E GRADE ---
+    // --- EQUIPE (DESIGN ORIGINAL + SALVAMENTO) ---
     async function carregarEquipe() {
         const snap = await db.collection("barbeiros").get();
         const lista = document.getElementById('render-equipe');
@@ -228,7 +245,14 @@
         snap.forEach(doc => {
             const b = doc.data();
             selects.forEach(s => s.innerHTML += `<option value="${doc.id}">${b.nome}</option>`);
-            lista.innerHTML += `<div class="item-list"><span><b>${b.nome}</b></span><div class="btn-group"><button class="btn-edit" onclick="prepararEdicao('${doc.id}', '${b.nome}', \`${b.servicos}\`)">EDITAR</button><button class="btn-del" onclick="excluir('barbeiros', '${doc.id}')">X</button></div></div>`;
+            lista.innerHTML += `
+                <div class="item-list">
+                    <span><b>${b.nome.toUpperCase()}</b></span>
+                    <div class="btn-group">
+                        <button class="btn-edit" onclick="prepararEdicao('${doc.id}', '${b.nome}', \`${b.servicos}\`)">EDITAR</button>
+                        <button class="btn-del" onclick="excluir('barbeiros', '${doc.id}')">X</button>
+                    </div>
+                </div>`;
         });
     }
 
@@ -236,9 +260,10 @@
         const id = document.getElementById('edit-barbeiro-id').value;
         const nome = document.getElementById('b-nome').value;
         const servicos = document.getElementById('b-servs').value;
-        if(!nome) return;
-        if(id) await db.collection("barbeiros").doc(id).update({nome, servicos});
-        else await db.collection("barbeiros").add({nome, servicos});
+        if(!nome || !servicos) return alert("Preencha Nome e Serviços!");
+        const dados = { nome, servicos };
+        if(id) await db.collection("barbeiros").doc(id).update(dados);
+        else await db.collection("barbeiros").add(dados);
         limparFormEquipe(); carregarEquipe();
     }
 
@@ -247,7 +272,8 @@
         document.getElementById('b-nome').value = nome;
         document.getElementById('b-servs').value = servs;
         document.getElementById('btn-cancelar-edit').style.display = "block";
-        document.getElementById('titulo-equipe').innerText = "Editando Barbeiro";
+        document.getElementById('titulo-equipe').innerText = "Editando Profissional";
+        window.scrollTo(0,0);
     }
 
     function limparFormEquipe() {
@@ -258,6 +284,7 @@
         document.getElementById('titulo-equipe').innerText = "Novo Profissional";
     }
 
+    // --- GRADE ---
     async function carregarConfigGradeBarbeiro() {
         const bId = document.getElementById('grade-barbeiro-select').value;
         if(!bId) { document.getElementById('grade-controles').style.display = 'none'; return; }
@@ -281,13 +308,13 @@
         alert("Grade salva!");
     }
 
-    // --- ASSINATURA E CONFIG BOT ---
+    // --- ASSINATURA E BOT ---
     async function verificarAssinatura() {
         const doc = await db.collection("configuracao").doc("assinatura").get();
         if(doc.exists) {
             const venc = doc.data().premiumAte.toDate();
             const resta = Math.ceil((venc - new Date()) / (1000 * 60 * 60 * 24));
-            document.getElementById('txt-restam').innerText = resta > 0 ? `Premium vence em ${resta} dias` : "Expirado";
+            document.getElementById('txt-restam').innerText = resta > 0 ? `Premium vence em ${resta} dias` : "Assinatura Expirada";
         }
     }
 
@@ -317,12 +344,12 @@
         }
     }
 
-    // --- BLOQUEIOS ---
+    // --- BLOQUEIOS E AUXILIARES ---
     async function salvarFolgas() {
         const bId = document.getElementById('f-barbeiro').value;
         const data = document.getElementById('f-data').value;
         const horas = Array.from(document.querySelectorAll('#grid-selecao-folgas .hora-chip.active')).map(el => el.dataset.time);
-        if(!bId || !data || horas.length === 0) return alert("Faltam dados");
+        if(!bId || !data || horas.length === 0) return alert("Selecione barbeiro, data e horários.");
         const batch = db.batch();
         horas.forEach(h => batch.set(db.collection("bloqueios").doc(), { barbeiroId: bId, data, hora: h }));
         await batch.commit();
@@ -330,7 +357,6 @@
         document.querySelectorAll('#grid-selecao-folgas .hora-chip').forEach(el => el.classList.remove('active'));
     }
 
-    // --- AUXILIARES ---
     function toggleElement(el) { el.classList.toggle('active'); }
     function switchTab(tab, el) {
         document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
@@ -338,7 +364,7 @@
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         el.classList.add('active');
     }
-    async function excluir(col, id) { if(confirm("Excluir?")) { await db.collection(col).doc(id).delete(); if(col==='barbeiros') carregarEquipe(); } }
+    async function excluir(col, id) { if(confirm("Excluir item?")) { await db.collection(col).doc(id).delete(); if(col==='barbeiros') carregarEquipe(); } }
 </script>
 </body>
 </html>
