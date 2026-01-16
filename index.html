@@ -7,6 +7,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&family=Cinzel:wght@700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root { 
             --primary: #c5a059; --bg: #0a0a0a; --card: #141414; 
@@ -29,7 +30,14 @@
 
         .header { text-align: center; padding: 20px 0; }
         .logo-img { width: 180px; height: auto; margin-bottom: 10px; }
-        .header p { font-size: 0.7rem; letter-spacing: 5px; color: var(--text-dim); text-transform: uppercase; margin-top: 5px; }
+        .header p { font-size: 0.75rem; letter-spacing: 1px; color: var(--primary); text-transform: uppercase; margin-top: 5px; font-weight: 600; }
+        
+        /* Estilos Novos Canais de Contato */
+        .social-header { display: flex; justify-content: center; gap: 20px; margin-top: 15px; }
+        .social-header a { color: var(--text); font-size: 1.4rem; transition: 0.3s; text-decoration: none; }
+        .social-header a:hover { color: var(--primary); }
+        .social-header .fa-instagram { background: var(--grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .social-header .fa-whatsapp { color: #25d366; }
 
         .card { background: var(--card); padding: 25px; border-radius: 35px; border: 1px solid #222; }
         label { font-size: 0.7rem; color: var(--primary); font-weight: 800; text-transform: uppercase; margin: 15px 0 8px 10px; display: block; }
@@ -94,7 +102,12 @@
 <div class="container" id="main-container">
     <div class="header">
         <img src="logo_insta.png" alt="Logo" class="logo-img">
-        <p>Criando seu estilo</p>
+        <p>Rua Ramira Cabral, 73 - CENTRO JACAREÍ - SP</p>
+        
+        <div class="social-header">
+            <a href="https://www.instagram.com/el_negrones" target="_blank"><i class="fab fa-instagram"></i></a>
+            <a href="https://wa.me/5512996025236" target="_blank"><i class="fab fa-whatsapp"></i></a>
+        </div>
     </div>
 
     <div id="conteudo-agendamento">
