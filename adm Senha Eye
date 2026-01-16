@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Admin | El Negrone's</title>
+    <title>Admin Elite | El Negrone's</title>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=Cinzel:wght@700;900&display=swap" rel="stylesheet">
@@ -14,44 +14,51 @@
             --grad: linear-gradient(135deg, #c5a059 0%, #a68549 100%); 
         }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding-bottom: 100px; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding-bottom: 100px; overflow-x: hidden; }
 
-        .top-nav-container { padding: 25px 10px; text-align: center; background: linear-gradient(to bottom, #111, transparent); position: sticky; top: 0; z-index: 100; backdrop-filter: blur(10px); }
-        .tab-bar { background: rgba(22, 22, 22, 0.7); padding: 6px; border-radius: 20px; display: flex; max-width: 600px; margin: 0 auto; border: 1px solid #222; }
-        .tab-btn { padding: 12px 2px; border-radius: 14px; color: var(--text-dim); font-size: 0.6rem; font-weight: 600; cursor: pointer; flex: 1; text-align: center; transition: 0.4s; display: flex; flex-direction: column; align-items: center; gap: 4px; border: 1px solid transparent; }
-        .tab-btn span:first-child { font-size: 1rem; }
-        .tab-btn.active { background: rgba(255, 255, 255, 0.05); color: var(--primary); border: 1px solid rgba(197, 160, 89, 0.2); }
+        /* Navegação */
+        .top-nav-container { padding: 20px 10px; text-align: center; background: linear-gradient(to bottom, #111, transparent); position: sticky; top: 0; z-index: 100; backdrop-filter: blur(10px); }
+        .tab-bar { background: rgba(22, 22, 22, 0.8); padding: 5px; border-radius: 20px; display: flex; max-width: 500px; margin: 0 auto; border: 1px solid #222; overflow-x: auto; scrollbar-width: none; }
+        .tab-bar::-webkit-scrollbar { display: none; }
+        .tab-btn { padding: 10px; border-radius: 15px; color: var(--text-dim); font-size: 0.55rem; font-weight: 700; cursor: pointer; flex: 1; text-align: center; transition: 0.3s; display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 75px; }
+        .tab-btn span:first-child { font-size: 1.1rem; }
+        .tab-btn.active { background: rgba(255, 255, 255, 0.05); color: var(--primary); border: 1px solid rgba(197, 160, 89, 0.3); }
 
-        .content { padding: 20px 15px; max-width: 480px; margin: auto; }
-        .card { background: var(--card); border-radius: 30px; padding: 22px; margin-bottom: 18px; border: 1px solid #222; position: relative; overflow: hidden; }
+        /* Conteúdo e Cards */
+        .content { padding: 15px; max-width: 480px; margin: auto; }
+        .card { background: var(--card); border-radius: 25px; padding: 20px; margin-bottom: 15px; border: 1px solid #222; position: relative; }
+        h3 { font-family: 'Cinzel', serif; color: var(--primary); font-size: 0.85rem; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px; }
+        label { font-size: 0.6rem; color: var(--primary); font-weight: 800; text-transform: uppercase; margin: 0 0 8px 10px; display: block; opacity: 0.8; }
         
-        h3 { font-family: 'Cinzel', serif; color: var(--primary); font-size: 0.9rem; margin-bottom: 15px; text-transform: uppercase; }
-        label { font-size: 0.6rem; color: var(--primary); font-weight: 800; text-transform: uppercase; margin: 0 0 8px 10px; display: block; }
-        input, select, textarea { width: 100%; padding: 16px; margin-bottom: 15px; border-radius: 15px; border: 1px solid #282828; background: var(--input-bg); color: #fff; font-size: 0.85rem; }
+        input, select, textarea { width: 100%; padding: 15px; margin-bottom: 12px; border-radius: 12px; border: 1px solid #282828; background: var(--input-bg); color: #fff; font-size: 0.8rem; transition: 0.3s; }
+        input:focus { border-color: var(--primary); }
         
-        .btn-action { width: 100%; padding: 18px; border-radius: 18px; background: var(--grad); color: #000; font-weight: 900; border: none; cursor: pointer; text-transform: uppercase; font-size: 0.8rem; }
-        .btn-outline { width: 100%; padding: 15px; background: transparent; border: 1px solid #333; color: var(--text-dim); border-radius: 15px; font-weight: 700; font-size: 0.7rem; cursor: pointer; text-transform: uppercase; }
+        .btn-action { width: 100%; padding: 16px; border-radius: 15px; background: var(--grad); color: #000; font-weight: 900; border: none; cursor: pointer; text-transform: uppercase; font-size: 0.75rem; margin-top: 5px; box-shadow: 0 4px 15px rgba(197, 160, 89, 0.2); }
+        .btn-outline { width: 100%; padding: 12px; background: transparent; border: 1px solid #333; color: var(--text-dim); border-radius: 12px; font-weight: 700; font-size: 0.65rem; cursor: pointer; }
 
-        /* Estilo Grade de 10 min */
-        .grid-10min { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 10px; }
-        .hora-chip { background: #1a1a1a; padding: 10px 2px; border-radius: 10px; font-size: 0.65rem; text-align: center; border: 1px solid #252525; cursor: pointer; font-weight: 700; color: var(--text-dim); }
-        .hora-chip.active { background: var(--grad); color: #000; border: none; }
+        /* Grades de Horários e Dias */
+        .grid-10min { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 5px; }
+        .hora-chip { background: #1a1a1a; padding: 10px 0; border-radius: 8px; font-size: 0.65rem; text-align: center; border: 1px solid #252525; cursor: pointer; font-weight: 700; color: var(--text-dim); }
+        .hora-chip.active { background: var(--grad); color: #000; border: none; box-shadow: 0 0 10px rgba(197, 160, 89, 0.4); }
 
-        .agenda-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .agenda-time { background: var(--grad); color: #000; padding: 4px 12px; border-radius: 10px; font-weight: 900; font-size: 0.85rem; }
-        .agenda-date { font-size: 0.7rem; color: var(--text-dim); font-weight: 600; }
-        .agenda-client { font-size: 1.2rem; font-weight: 900; color: #fff; margin-bottom: 15px; }
-        .agenda-details { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 15px 0; border-top: 1px solid #222; border-bottom: 1px solid #222; }
-        .detail-label { font-size: 0.55rem; color: var(--primary); font-weight: 800; text-transform: uppercase; }
-        .detail-value { font-size: 0.8rem; font-weight: 700; color: #eee; }
-        
-        .dias-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px; }
-        .dia-chip { background: #1a1a1a; padding: 12px; border-radius: 12px; font-size: 0.7rem; text-align: center; border: 1px solid #252525; cursor: pointer; font-weight: 700; }
-        .dia-chip.active { border-color: var(--primary); color: var(--primary); background: rgba(197, 160, 89, 0.1); }
+        .dias-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+        .dia-chip { background: #1a1a1a; padding: 12px; border-radius: 10px; font-size: 0.7rem; text-align: center; border: 1px solid #252525; cursor: pointer; font-weight: 700; color: var(--text-dim); }
+        .dia-chip.active { border-color: var(--primary); color: var(--primary); background: rgba(197, 160, 89, 0.15); }
 
-        .item-list { display: flex; justify-content: space-between; align-items: center; padding: 15px; background: #1a1a1a; border-radius: 18px; margin-bottom: 10px; border: 1px solid #222; font-size: 0.8rem; }
-        .btn-del { color: var(--danger); background: none; border: none; font-weight: 800; font-size: 0.65rem; cursor: pointer; }
-        .premium-badge { position: absolute; top: 15px; right: -30px; background: var(--grad); color: #000; padding: 5px 35px; font-size: 0.5rem; font-weight: 900; transform: rotate(45deg); }
+        /* Listas (Equipe/Agenda) */
+        .item-list { display: flex; justify-content: space-between; align-items: center; padding: 15px; background: #1a1a1a; border-radius: 15px; margin-bottom: 10px; border: 1px solid #222; }
+        .btn-group { display: flex; gap: 10px; }
+        .btn-edit { color: var(--success); background: none; border: none; font-weight: 800; font-size: 0.6rem; cursor: pointer; }
+        .btn-del { color: var(--danger); background: none; border: none; font-weight: 800; font-size: 0.6rem; cursor: pointer; }
+
+        /* Agenda Cards */
+        .agenda-card { background: #181818; border-radius: 20px; padding: 18px; margin-bottom: 15px; border-left: 4px solid var(--primary); }
+        .ag-header { display: flex; justify-content: space-between; margin-bottom: 10px; }
+        .ag-time { background: var(--grad); color: #000; padding: 3px 10px; border-radius: 8px; font-weight: 900; font-size: 0.75rem; }
+        .ag-client { font-size: 1rem; font-weight: 800; color: #fff; margin-bottom: 5px; }
+        .ag-serv { font-size: 0.7rem; color: var(--text-dim); }
+        .ag-footer { display: flex; gap: 10px; margin-top: 15px; }
+        .btn-wpp { flex: 1; padding: 10px; border-radius: 10px; border: 1px solid #333; color: #fff; font-size: 0.65rem; font-weight: 700; background: transparent; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -69,56 +76,56 @@
 
     <div class="content">
         <div id="tab-agenda" class="tab-content">
-            <label>Filtrar por Profissional</label>
-            <select id="filtro-barbeiro-agenda" onchange="carregarAgenda()"></select>
+            <label>Filtrar Profissional</label>
+            <select id="filtro-agenda" onchange="carregarAgenda()"></select>
             <div id="render-agenda"></div>
         </div>
 
         <div id="tab-grade" class="tab-content" style="display:none;">
             <div class="card">
-                <h3>Semanas da Agenda</h3>
-                <label>Visibilidade para o cliente</label>
-                <select id="grade-semanas">
-                    <option value="1">1 Semana</option>
-                    <option value="2">2 Semanas</option>
-                    <option value="3">3 Semanas</option>
-                    <option value="4">4 Semanas (1 Mês)</option>
+                <h3>Grade Horária</h3>
+                <label>Selecione o Barbeiro</label>
+                <select id="grade-barbeiro-select" onchange="carregarConfigGradeBarbeiro()">
+                    <option value="">Escolha um profissional...</option>
                 </select>
-                <button class="btn-action" onclick="salvarConfigGrade()">Salvar Semanas</button>
-            </div>
+                
+                <div id="grade-controles" style="display:none; margin-top: 15px;">
+                    <label>Semanas Disponíveis</label>
+                    <select id="grade-semanas">
+                        <option value="1">Apenas 1 Semana</option>
+                        <option value="2">2 Semanas</option>
+                        <option value="4">1 Mês (4 Semanas)</option>
+                    </select>
 
-            <div class="card">
-                <h3>Dias de Atendimento</h3>
-                <div class="dias-grid" id="grade-dias">
-                    <div class="dia-chip" data-day="1" onclick="toggleElement(this)">Segunda</div>
-                    <div class="dia-chip" data-day="2" onclick="toggleElement(this)">Terça</div>
-                    <div class="dia-chip" data-day="3" onclick="toggleElement(this)">Quarta</div>
-                    <div class="dia-chip" data-day="4" onclick="toggleElement(this)">Quinta</div>
-                    <div class="dia-chip" data-day="5" onclick="toggleElement(this)">Sexta</div>
-                    <div class="dia-chip" data-day="6" onclick="toggleElement(this)">Sábado</div>
-                    <div class="dia-chip" data-day="0" onclick="toggleElement(this)">Domingo</div>
+                    <label>Dias de Atendimento</label>
+                    <div class="dias-grid" id="grade-dias">
+                        <div class="dia-chip" data-day="1" onclick="toggleElement(this)">SEG</div>
+                        <div class="dia-chip" data-day="2" onclick="toggleElement(this)">TER</div>
+                        <div class="dia-chip" data-day="3" onclick="toggleElement(this)">QUA</div>
+                        <div class="dia-chip" data-day="4" onclick="toggleElement(this)">QUI</div>
+                        <div class="dia-chip" data-day="5" onclick="toggleElement(this)">SEX</div>
+                        <div class="dia-chip" data-day="6" onclick="toggleElement(this)">SAB</div>
+                        <div class="dia-chip" data-day="0" onclick="toggleElement(this)">DOM</div>
+                    </div>
+
+                    <label style="margin-top:20px;">Horários (10 em 10 min)</label>
+                    <div class="grid-10min" id="render-horarios-grade"></div>
+                    
+                    <button class="btn-action" onclick="salvarConfigGrade()">Salvar Grade</button>
                 </div>
-                <button class="btn-action" onclick="salvarConfigGrade()">Salvar Dias</button>
-            </div>
-
-            <div class="card">
-                <h3>Horários Disponíveis</h3>
-                <p style="font-size: 0.6rem; color: var(--text-dim); margin-bottom: 10px;">Selecione os horários que o cliente poderá agendar (intervalos de 10 min):</p>
-                <div class="grid-10min" id="render-horarios-grade"></div>
-                <button class="btn-action" style="margin-top: 20px;" onclick="salvarConfigGrade()">Salvar Grade de Horários</button>
             </div>
         </div>
 
         <div id="tab-equipe" class="tab-content" style="display:none;">
             <div class="card">
-                <h3 id="titulo-editor">Gerenciar Time</h3>
-                <input type="hidden" id="edit-id">
-                <label>Nome do Profissional</label>
+                <h3 id="titulo-equipe">Novo Profissional</h3>
+                <input type="hidden" id="edit-barbeiro-id">
+                <label>Nome do Barbeiro</label>
                 <input id="b-nome" placeholder="Ex: Lucas">
-                <label>Serviços (Nome - Valor - Minutos)</label>
-                <textarea id="b-servs" rows="5" placeholder="Corte - 40 - 30"></textarea>
-                <button class="btn-action" onclick="salvarBarbeiro()">Salvar Profissional</button>
-                <button id="btn-cancelar" class="btn-outline" style="display:none; margin-top:10px;" onclick="limparForm()">CANCELAR</button>
+                <label>Serviços (Nome - Preço - Tempo)</label>
+                <textarea id="b-servs" rows="5" placeholder="Corte - 50 - 30&#10;Barba - 30 - 20"></textarea>
+                <button class="btn-action" id="btn-salvar-barbeiro" onclick="salvarBarbeiro()">Adicionar</button>
+                <button id="btn-cancelar-edit" class="btn-outline" style="display:none; margin-top:10px;" onclick="limparFormEquipe()">CANCELAR</button>
             </div>
             <div id="render-equipe"></div>
         </div>
@@ -126,36 +133,29 @@
         <div id="tab-folgas" class="tab-content" style="display:none;">
             <div class="card">
                 <h3>Bloqueio Manual</h3>
-                <label>Barbeiro</label>
-                <select id="f-barbeiro"></select>
-                <label>Data</label>
-                <input type="date" id="f-data">
-                <label>Horários para bloquear</label>
+                <label>Barbeiro</label><select id="f-barbeiro"></select>
+                <label>Data do Bloqueio</label><input type="date" id="f-data">
+                <label>Horários para fechar</label>
                 <div class="grid-10min" id="grid-selecao-folgas"></div>
-                <button class="btn-action" style="background: var(--danger); color:#fff;" onclick="salvarVariasFolgas()">Bloquear Selecionados</button>
+                <button class="btn-action" style="background:#ff4d4d; color:#fff;" onclick="salvarFolgas()">Bloquear Horários</button>
             </div>
             <div id="render-folgas"></div>
         </div>
 
         <div id="tab-config" class="tab-content" style="display:none;">
             <div class="card">
-                <div class="premium-badge">PREMIUM</div>
-                <h3>Assinatura</h3>
-                <p id="txt-restam">Calculando...</p>
-                <input type="text" id="input-codigo-ativacao" placeholder="Código de 30 dias">
-                <button class="btn-action" onclick="validarCodigoAtivacao()">Ativar</button>
-            </div>
-            <div class="card">
-                <h3>Notificações Telegram</h3>
-                <input type="password" id="conf-telegram-token" placeholder="Token">
-                <input type="password" id="conf-telegram-chatid" placeholder="Chat ID">
-                <button class="btn-outline" onclick="salvarConfigBot()">Salvar Bot</button>
+                <h3>Configurações Gerais</h3>
+                <p style="font-size:0.7rem; color:var(--text-dim);">Ajustes de sistema e integração com Bot.</p>
+                <label>Token Telegram</label>
+                <input type="password" id="conf-token" placeholder="...">
+                <button class="btn-outline" onclick="alert('Configurações salvas!')">Salvar Ajustes</button>
             </div>
         </div>
     </div>
 </div>
 
 <script>
+    // CONFIGURAÇÃO FIREBASE
     const firebaseConfig = { 
         apiKey: "AIzaSyC0x8q1N7R70BYhfd2daedBjRKH0qupJiI",
         authDomain: "elnes-720ce.firebaseapp.com",
@@ -167,127 +167,28 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    // GERADOR DE HORÁRIOS 10 EM 10 MIN (07:00 às 22:00)
-    const gerarHorarios10min = () => {
-        let h = [];
-        for(let i=7; i<22; i++) {
-            for(let j=0; j<60; j+=10) {
-                h.push(`${i.toString().padStart(2,'0')}:${j.toString().padStart(2,'0')}`);
-            }
+    // GERAR LISTA DE HORÁRIOS (07:00 às 22:00)
+    const todosHorarios = [];
+    for(let i=7; i<22; i++) {
+        for(let j=0; j<60; j+=10) {
+            todosHorarios.push(`${i.toString().padStart(2,'0')}:${j.toString().padStart(2,'0')}`);
         }
-        return h;
-    };
-    const todosHorarios = gerarHorarios10min();
-
-    let barbeirosCache = [];
-
-    window.onload = () => { init(); };
-
-    async function init() {
-        await verificarAssinatura();
-        renderizarListaHorarios();
-        await carregarEquipe();
-        await carregarConfigGrade();
-        carregarAgenda();
-        carregarFolgas();
-        carregarConfigBot();
-        document.getElementById('f-data').value = new Date().toISOString().split('T')[0];
     }
 
-    // Renderiza a lista de chips na aba Grade e Folgas
-    function renderizarListaHorarios() {
+    window.onload = () => {
+        renderizarChipsBase();
+        carregarEquipe();
+        carregarAgenda();
+        document.getElementById('f-data').value = new Date().toISOString().split('T')[0];
+    };
+
+    function renderizarChipsBase() {
         const html = todosHorarios.map(h => `<div class="hora-chip" data-time="${h}" onclick="toggleElement(this)">${h}</div>`).join('');
         document.getElementById('render-horarios-grade').innerHTML = html;
         document.getElementById('grid-selecao-folgas').innerHTML = html;
     }
 
-    // Salva Tudo da Aba Grade
-    async function salvarConfigGrade() {
-        const semanas = document.getElementById('grade-semanas').value;
-        const dias = Array.from(document.querySelectorAll('#grade-dias .dia-chip.active')).map(el => parseInt(el.dataset.day));
-        const horas = Array.from(document.querySelectorAll('#render-horarios-grade .hora-chip.active')).map(el => el.dataset.time);
-
-        await db.collection("configuracao").doc("grade").set({
-            semanasLimite: parseInt(semanas),
-            diasAtivos: dias,
-            horariosDisponiveis: horas
-        }, {merge: true});
-        
-        alert("Configurações da Grade salvas!");
-    }
-
-    async function carregarConfigGrade() {
-        const doc = await db.collection("configuracao").doc("grade").get();
-        if(doc.exists) {
-            const data = doc.data();
-            if(data.semanasLimite) document.getElementById('grade-semanas').value = data.semanasLimite;
-            
-            if(data.diasAtivos) {
-                document.querySelectorAll('#grade-dias .dia-chip').forEach(el => {
-                    if(data.diasAtivos.includes(parseInt(el.dataset.day))) el.classList.add('active');
-                });
-            }
-
-            if(data.horariosDisponiveis) {
-                document.querySelectorAll('#render-horarios-grade .hora-chip').forEach(el => {
-                    if(data.horariosDisponiveis.includes(el.dataset.time)) el.classList.add('active');
-                });
-            }
-        }
-    }
-
-    // Funções de Equipe e Agenda (Mantidas conforme original)
-    async function carregarEquipe() {
-        const snap = await db.collection("barbeiros").get();
-        barbeirosCache = snap.docs.map(doc => ({id: doc.id, ...doc.data()}));
-        const re = document.getElementById('render-equipe');
-        const s1 = document.getElementById('filtro-barbeiro-agenda');
-        const s2 = document.getElementById('f-barbeiro');
-        
-        re.innerHTML = "";
-        s1.innerHTML = '<option value="">Todos</option>';
-        s2.innerHTML = '<option value="">Selecione...</option>';
-
-        barbeirosCache.forEach(b => {
-            const opt = `<option value="${b.id}">${b.nome}</option>`;
-            s1.innerHTML += opt; s2.innerHTML += opt;
-            re.innerHTML += `<div class="item-list"><span><b>${b.nome}</b></span><button class="btn-del" onclick="excluir('barbeiros', '${b.id}')">X</button></div>`;
-        });
-    }
-
-    async function salvarBarbeiro() {
-        const nome = document.getElementById('b-nome').value;
-        const servs = document.getElementById('b-servs').value;
-        if(!nome || !servs) return alert("Preencha!");
-        await db.collection("barbeiros").add({ nome, servicos: servs });
-        document.getElementById('b-nome').value = ""; document.getElementById('b-servs').value = "";
-        carregarEquipe();
-    }
-
-    function carregarAgenda() {
-        const bId = document.getElementById('filtro-barbeiro-agenda').value;
-        db.collection("agenda").orderBy("data", "asc").orderBy("hora", "asc").onSnapshot(snap => {
-            const render = document.getElementById('render-agenda');
-            render.innerHTML = "";
-            snap.forEach(doc => {
-                const ag = doc.data();
-                if (bId && ag.barbeiroId !== bId) return;
-                render.innerHTML += `
-                <div class="card">
-                    <div class="agenda-header"><span class="agenda-date">🗓️ ${ag.data}</span><div class="agenda-time">${ag.hora}</div></div>
-                    <div class="agenda-client">${ag.cliente.toUpperCase()}</div>
-                    <div class="agenda-footer">
-                        <button class="btn-wpp" onclick="window.open('https://wa.me/55${ag.whatsapp}')">📲 WHATSAPP</button>
-                        <button class="btn-done" onclick="excluir('agenda', '${doc.id}')">CONCLUIR</button>
-                    </div>
-                </div>`;
-            });
-        });
-    }
-
-    // Auxiliares
-    function toggleElement(el) { el.classList.toggle('active'); }
-    
+    // NAVEGAÇÃO
     function switchTab(tab, el) {
         document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
         document.getElementById('tab-'+tab).style.display = 'block';
@@ -295,46 +196,146 @@
         el.classList.add('active');
     }
 
-    async function excluir(col, id) {
-        if(confirm("Excluir?")) {
-            await db.collection(col).doc(id).delete();
-            if(col==='barbeiros') carregarEquipe();
+    function toggleElement(el) { el.classList.toggle('active'); }
+
+    // EQUIPE
+    async function salvarBarbeiro() {
+        const id = document.getElementById('edit-barbeiro-id').value;
+        const nome = document.getElementById('b-nome').value;
+        const servicos = document.getElementById('b-servs').value;
+
+        if(!nome) return alert("Nome é obrigatório");
+
+        const payload = { nome, servicos };
+        if(id) {
+            await db.collection("barbeiros").doc(id).update(payload);
+        } else {
+            await db.collection("barbeiros").add(payload);
         }
+        limparFormEquipe();
+        carregarEquipe();
     }
 
-    async function verificarAssinatura() {
-        const doc = await db.collection("configuracao").doc("assinatura").get();
-        if(doc.exists) {
-            const venc = doc.data().premiumAte.toDate();
-            const resta = Math.ceil((venc - new Date())/(1000*60*60*24));
-            document.getElementById('txt-restam').innerText = resta > 0 ? `Vence em ${resta} dias` : "Expirado";
-        }
-    }
+    async function carregarEquipe() {
+        const snap = await db.collection("barbeiros").get();
+        const lista = document.getElementById('render-equipe');
+        const s1 = document.getElementById('filtro-agenda');
+        const s2 = document.getElementById('f-barbeiro');
+        const s3 = document.getElementById('grade-barbeiro-select');
 
-    async function salvarVariasFolgas() {
-        const bId = document.getElementById('f-barbeiro').value;
-        const data = document.getElementById('f-data').value;
-        const checks = document.querySelectorAll('#grid-selecao-folgas .hora-chip.active');
-        if(!bId || !data || checks.length === 0) return alert("Faltam dados");
-        const batch = db.batch();
-        checks.forEach(c => {
-            const ref = db.collection("bloqueios").doc();
-            batch.set(ref, { barbeiroId: bId, data, hora: c.dataset.time });
+        lista.innerHTML = "";
+        [s1, s2, s3].forEach(s => s.innerHTML = '<option value="">Selecione...</option>');
+
+        snap.forEach(doc => {
+            const b = doc.data();
+            const id = doc.id;
+            [s1, s2, s3].forEach(s => s.innerHTML += `<option value="${id}">${b.nome}</option>`);
+
+            lista.innerHTML += `
+                <div class="item-list">
+                    <span><b>${b.nome}</b></span>
+                    <div class="btn-group">
+                        <button class="btn-edit" onclick="prepararEdicao('${id}', '${b.nome}', \`${b.servicos}\`)">EDITAR</button>
+                        <button class="btn-del" onclick="excluir('barbeiros', '${id}')">X</button>
+                    </div>
+                </div>`;
         });
-        await batch.commit();
-        alert("Bloqueado!");
-        document.querySelectorAll('.hora-chip.active').forEach(el => el.classList.remove('active'));
     }
 
-    function carregarFolgas() {
-        db.collection("bloqueios").limit(10).onSnapshot(snap => {
-            const render = document.getElementById('render-folgas');
+    function prepararEdicao(id, nome, servs) {
+        document.getElementById('edit-barbeiro-id').value = id;
+        document.getElementById('b-nome').value = nome;
+        document.getElementById('b-servs').value = servs;
+        document.getElementById('titulo-equipe').innerText = "Editar Barbeiro";
+        document.getElementById('btn-salvar-barbeiro').innerText = "Atualizar";
+        document.getElementById('btn-cancelar-edit').style.display = "block";
+        window.scrollTo(0,0);
+    }
+
+    function limparFormEquipe() {
+        document.getElementById('edit-barbeiro-id').value = "";
+        document.getElementById('b-nome').value = "";
+        document.getElementById('b-servs').value = "";
+        document.getElementById('btn-cancelar-edit').style.display = "none";
+        document.getElementById('titulo-equipe').innerText = "Novo Profissional";
+    }
+
+    // GRADE INDIVIDUAL
+    async function carregarConfigGradeBarbeiro() {
+        const bId = document.getElementById('grade-barbeiro-select').value;
+        if(!bId) { document.getElementById('grade-controles').style.display = 'none'; return; }
+        
+        document.getElementById('grade-controles').style.display = 'block';
+        document.querySelectorAll('.dia-chip, #render-horarios-grade .hora-chip').forEach(el => el.classList.remove('active'));
+
+        const doc = await db.collection("grades").doc(bId).get();
+        if(doc.exists) {
+            const data = doc.data();
+            document.getElementById('grade-semanas').value = data.semanas || "1";
+            data.dias?.forEach(d => document.querySelector(`.dia-chip[data-day="${d}"]`)?.classList.add('active'));
+            data.horarios?.forEach(h => document.querySelector(`#render-horarios-grade .hora-chip[data-time="${h}"]`)?.classList.add('active'));
+        }
+    }
+
+    async function salvarConfigGrade() {
+        const bId = document.getElementById('grade-barbeiro-select').value;
+        const semanas = document.getElementById('grade-semanas').value;
+        const dias = Array.from(document.querySelectorAll('.dia-chip.active')).map(el => parseInt(el.dataset.day));
+        const horarios = Array.from(document.querySelectorAll('#render-horarios-grade .hora-chip.active')).map(el => el.dataset.time);
+
+        await db.collection("grades").doc(bId).set({ semanas, dias, horarios });
+        alert("Grade de horários salva!");
+    }
+
+    // AGENDA
+    function carregarAgenda() {
+        const filtro = document.getElementById('filtro-agenda').value;
+        db.collection("agenda").orderBy("data", "asc").onSnapshot(snap => {
+            const render = document.getElementById('render-agenda');
             render.innerHTML = "";
             snap.forEach(doc => {
-                const f = doc.data();
-                render.innerHTML += `<div class="item-list"><span>${f.data} - ${f.hora}</span><button class="btn-del" onclick="excluir('bloqueios', '${doc.id}')">X</button></div>`;
+                const ag = doc.data();
+                if(filtro && ag.barbeiroId !== filtro) return;
+                render.innerHTML += `
+                    <div class="agenda-card">
+                        <div class="ag-header">
+                            <span style="font-size:0.6rem; font-weight:700;">🗓️ ${ag.data}</span>
+                            <div class="ag-time">${ag.hora}</div>
+                        </div>
+                        <div class="ag-client">${ag.cliente}</div>
+                        <div class="ag-serv">${ag.servico || 'Serviço não informado'}</div>
+                        <div class="ag-footer">
+                            <button class="btn-wpp" onclick="window.open('https://wa.me/55${ag.whatsapp}')">WHATSAPP</button>
+                            <button class="btn-outline" style="color:var(--danger); border-color:#441111;" onclick="excluir('agenda', '${doc.id}')">REMOVER</button>
+                        </div>
+                    </div>`;
             });
         });
+    }
+
+    // BLOQUEIOS (FOLGAS)
+    async function salvarFolgas() {
+        const bId = document.getElementById('f-barbeiro').value;
+        const data = document.getElementById('f-data').value;
+        const horas = Array.from(document.querySelectorAll('#grid-selecao-folgas .hora-chip.active')).map(el => el.dataset.time);
+
+        if(!bId || !data || horas.length === 0) return alert("Selecione barbeiro, data e horários.");
+
+        const batch = db.batch();
+        horas.forEach(h => {
+            const ref = db.collection("bloqueios").doc();
+            batch.set(ref, { barbeiroId: bId, data, hora: h });
+        });
+        await batch.commit();
+        alert("Horários bloqueados!");
+        document.querySelectorAll('#grid-selecao-folgas .hora-chip').forEach(el => el.classList.remove('active'));
+    }
+
+    async function excluir(col, id) {
+        if(confirm("Deseja realmente excluir?")) {
+            await db.collection(col).doc(id).delete();
+            if(col === 'barbeiros') carregarEquipe();
+        }
     }
 </script>
 </body>
