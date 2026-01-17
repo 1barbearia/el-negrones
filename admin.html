@@ -108,7 +108,7 @@
                         <div class="dia-chip" data-day="6" onclick="toggleElement(this)">Sábado</div>
                         <div class="dia-chip" data-day="0" onclick="toggleElement(this)">Domingo</div>
                     </div>
- 
+
                     <label>Horários Disponíveis (10 em 10 min)</label>
                     <div class="grid-10min" id="render-horarios-grade"></div>
                     <button class="btn-action" onclick="salvarConfigGrade()">Salvar Grade</button>
@@ -232,87 +232,84 @@
     }
 
     // --- EQUIPE (DESIGN ORIGINAL + SALVAMENTO) ---
-   // --- EQUIPE (LOGICA CORRIGIDA) ---
-
-async function carregarEquipe() {
-    const snap = await db.collection("barbeiros").get();
-    const lista = document.getElementById('render-equipe');
-    const selects = [
-        document.getElementById('filtro-barbeiro-agenda'),
-        document.getElementById('f-barbeiro'),
-        document.getElementById('grade-barbeiro-select')
-    ];
-    
-    lista.innerHTML = "";
-    // Limpa e reinicia os selects
-    selects.forEach(s => { if(s) s.innerHTML = '<option value="">Selecione...</option>'; });
-
-    snap.forEach(doc => {
-        const b = doc.data();
-        // Alimenta os selects de outras abas
-        selects.forEach(s => { 
-            if(s) s.innerHTML += `<option value="${doc.id}">${b.nome}</option>`; 
+    async function carregarEquipe() {
+        const snap = await db.collection("barbeiros").get();
+        const lista = document.getElementById('render-equipe');
+        const selects = [
+            document.getElementById('filtro-barbeiro-agenda'),
+            document.getElementById('f-barbeiro'),
+            document.getElementById('grade-barbeiro-select')
+        ];
+        lista.innerHTML = "";
+        selects.forEach(s => s.innerHTML = '<option value="">Selecione...</option>');
+        snap.forEach(doc => {
+            const b = doc.data();
+            selects.forEach(s => s.innerHTML += `<option value="${doc.id}">${b.nome}</option>`);
+            lista.innerHTML += `
+                <div class="item-list">
+                    <span><b>${b.nome.toUpperCase()}</b></span>
+                    <div class="btn-group">
+                        <button class="btn-edit" onclick="prepararEdicao('${doc.id}', '${b.nome}', \`${b.servicos}\`)">EDITAR</button>
+                        <button class="btn-del" onclick="excluir('barbeiros', '${doc.id}')">X</button>
+                    </div>
+                </div>`;
         });
-
-        // Renderiza a lista com o design original
-        lista.innerHTML += `
-            <div class="item-list">
-                <span><b>${b.nome.toUpperCase()}</b></span>
-                <div class="btn-group">
-                    <button class="btn-edit" onclick="prepararEdicao('${doc.id}', '${b.nome}', \`${b.servicos}\`)">EDITAR</button>
-                    <button class="btn-del" onclick="excluir('barbeiros', '${doc.id}')">X</button>
-                </div>
-            </div>`;
-    });
-}
-
-async function salvarBarbeiro() {
-    // Pegando o ID correto do campo oculto
-    const id = document.getElementById('edit-id').value; 
-    const nome = document.getElementById('b-nome').value;
-    const servicos = document.getElementById('b-servs').value;
-
-    if(!nome || !servicos) return alert("Preencha Nome e Serviços!");
-
-    const dados = { nome, servicos };
-
-    try {
-        if(id) {
-            await db.collection("barbeiros").doc(id).update(dados);
-            alert("Profissional atualizado!");
-        } else {
-            await db.collection("barbeiros").add(dados);
-            alert("Profissional cadastrado!");
-        }
-        limparForm(); // Chama a função de limpar
-        carregarEquipe(); // Atualiza a lista
-    } catch (e) {
-        alert("Erro ao salvar: " + e.message);
     }
-}
 
-function prepararEdicao(id, nome, servs) {
-    // Preenche os campos para edição
-    document.getElementById('edit-id').value = id;
-    document.getElementById('b-nome').value = nome;
-    document.getElementById('b-servs').value = servs;
-    
-    // Altera o visual do botão e título
-    document.getElementById('btn-cancelar').style.display = "block";
-    document.getElementById('titulo-editor').innerText = "Editando: " + nome;
-    
-    // Rola para o topo para facilitar a visualização
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-}
+    // --- EQUIPE (CORRIGIDO) ---
+    async function salvarBarbeiro() {
+        // Ajustado para o ID correto do HTML: "edit-id"
+        const id = document.getElementById('edit-id').value;
+        const nome = document.getElementById('b-nome').value;
+        const servicos = document.getElementById('b-servs').value;
+        
+        if(!nome || !servicos) return alert("Preencha Nome e Serviços!");
+        
+        const dados = { nome, servicos };
+        
+        try {
+            if(id) {
+                await db.collection("barbeiros").doc(id).update(dados);
+                alert("Profissional atualizado!");
+            } else {
+                await db.collection("barbeiros").add(dados);
+                alert("Profissional adicionado!");
+            }
+            limparFormEquipe();
+            carregarEquipe();
+        } catch (error) {
+            console.error("Erro ao salvar:", error);
+            alert("Erro ao salvar barbeiro.");
+        }
+    }
 
-function limparForm() {
-    // Reseta tudo para o estado de "Novo"
-    document.getElementById('edit-id').value = "";
-    document.getElementById('b-nome').value = "";
-    document.getElementById('b-servs').value = "";
-    document.getElementById('btn-cancelar').style.display = "none";
-    document.getElementById('titulo-editor').innerText = "Gerenciar Time";
-}
+    function prepararEdicao(id, nome, servs) {
+        document.getElementById('edit-id').value = id;
+        document.getElementById('b-nome').value = nome;
+        document.getElementById('b-servs').value = servs;
+        
+        // Ajustado para os IDs existentes no seu HTML
+        document.getElementById('btn-cancelar').style.display = "block";
+        document.getElementById('titulo-editor').innerText = "Editando Profissional";
+        window.scrollTo(0,0);
+    }
+
+    function limparFormEquipe() {
+        document.getElementById('edit-id').value = "";
+        document.getElementById('b-nome').value = "";
+        document.getElementById('b-servs').value = "";
+        
+        document.getElementById('btn-cancelar').style.display = "none";
+        document.getElementById('titulo-editor').innerText = "Gerenciar Time";
+    }
+
+    function limparFormEquipe() {
+        document.getElementById('edit-barbeiro-id').value = "";
+        document.getElementById('b-nome').value = "";
+        document.getElementById('b-servs').value = "";
+        document.getElementById('btn-cancelar-edit').style.display = "none";
+        document.getElementById('titulo-equipe').innerText = "Novo Profissional";
+    }
 
     // --- GRADE ---
     async function carregarConfigGradeBarbeiro() {
