@@ -198,10 +198,14 @@
     // --- NOVA FUNÇÃO DO TELEGRAM ---
     async function enviarNotificacaoTelegram(nome, data, hora, servico, barbeiro) {
     try {
-        const docBot = await db.collection("configuracao").doc("telegram").get();
+        // Ajustado para o ID "bot" conforme definido no seu ADM
+        const docBot = await db.collection("configuracao").doc("bot").get();
         if (!docBot.exists) return;
 
-        const { token, chatId } = docBot.data();
+        const config = docBot.data();
+        const token = config.token;
+        const chatId = config.chatid; // 'chatid' tudo minúsculo conforme o ADM
+
         if (!token || !chatId) return;
 
         const dataBr = data.split('-').reverse().join('/');
@@ -282,71 +286,128 @@
     }
 
     async function renderizarDatasPremium() {
-        const render = document.getElementById('render-datas');
-        render.innerHTML = "Carregando...";
-        const confCal = await db.collection("configuracao").doc("calendario").get();
-        const confDias = await db.collection("configuracao").doc("funcionamento").get();
-        let semanas = confCal.exists ? parseInt(confCal.data().semanasLimite || 1) : 1;
-        let diasAtivos = confDias.exists ? confDias.data().diasAtivos : [1,2,3,4,5,6];
-        render.innerHTML = ""; 
-        const nomes = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
-        const hoje = new Date(); hoje.setHours(0,0,0,0);
-        for (let i = 0; i < (semanas * 7); i++) {
-            let d = new Date(hoje); d.setDate(hoje.getDate() + i);
-            if (diasAtivos.includes(d.getDay())) {
-                const iso = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-                const card = document.createElement('div');
-                card.className = 'card-data';
-                card.innerHTML = `<span>${nomes[d.getDay()]}</span><span>${d.getDate()}</span>`;
-                card.onclick = () => {
-                    document.querySelectorAll('.card-data').forEach(c => c.classList.remove('selecionada'));
-                    card.classList.add('selecionada');
-                    document.getElementById('data-agenda').value = iso;
-                    carregarHorarios(iso);
-                };
-                render.appendChild(card);
-            }
+    const render = document.getElementById('render-datas');
+    render.innerHTML = "Carregando...";
+    
+    // Tenta buscar a grade específica do barbeiro selecionado
+    const bId = document.getElementById("select-barbeiro").value;
+    let semanas = 2; // Padrão
+    let diasAtivos = [1,2,3,4,5,6]; // Padrão Segunda a Sábado
+
+    if(bId) {
+        const gradeDoc = await db.collection("grades").doc(bId).get();
+        if(gradeDoc.exists) {
+            const d = gradeDoc.data();
+            semanas = parseInt(d.semanas) || 2;
+            diasAtivos = d.dias || [1,2,3,4,5,6];
         }
     }
 
+    render.innerHTML = ""; 
+    const nomes = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+    const hoje = new Date(); hoje.setHours(0,0,0,0);
+    
+    for (let i = 0; i < (semanas * 7); i++) {
+        let d = new Date(hoje); d.setDate(hoje.getDate() + i);
+        if (diasAtivos.includes(d.getDay())) {
+            const iso = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+            const card = document.createElement('div');
+            card.className = 'card-data';
+            card.innerHTML = `<span>${nomes[d.getDay()]}</span><span>${d.getDate()}</span>`;
+            card.onclick = () => {
+                document.querySelectorAll('.card-data').forEach(c => c.classList.remove('selecionada'));
+                card.classList.add('selecionada');
+                document.getElementById('data-agenda').value = iso;
+                carregarHorarios(iso);
+            };
+            render.appendChild(card);
+        }
+    }
+}
+
     async function carregarHorarios(data) {
-        const grid = document.getElementById("grid-horarios");
-        const bId = document.getElementById("select-barbeiro").value;
-        const servTexto = document.getElementById("select-servico").value;
-        if(!servTexto) { grid.innerHTML = "<p style='grid-column:1/-1; font-size:0.7rem; color:orange;'>Escolha o serviço primeiro.</p>"; return; }
-        grid.innerHTML = "Verificando...";
-        const [agSnap, blSnap] = await Promise.all([
+    const grid = document.getElementById("grid-horarios");
+    const bId = document.getElementById("select-barbeiro").value;
+    const servTexto = document.getElementById("select-servico").value;
+
+    if (!bId) { 
+        grid.innerHTML = "<p style='grid-column:1/-1; font-size:0.7rem; color:orange;'>Selecione um profissional.</p>"; 
+        return; 
+    }
+    if (!servTexto) { 
+        grid.innerHTML = "<p style='grid-column:1/-1; font-size:0.7rem; color:orange;'>Escolha o serviço primeiro.</p>"; 
+        return; 
+    }
+
+    grid.innerHTML = "Verificando...";
+
+    try {
+        // 1. Busca Agenda, Bloqueios e a Grade configurada do Barbeiro
+        const [agSnap, blSnap, gradeDoc] = await Promise.all([
             db.collection("agenda").where("data", "==", data).where("barbeiroId", "==", bId).get(),
-            db.collection("bloqueios").where("data", "==", data).where("barbeiroId", "==", bId).get()
+            db.collection("bloqueios").where("data", "==", data).where("barbeiroId", "==", bId).get(),
+            db.collection("grades").doc(bId).get()
         ]);
+
+        if (!gradeDoc.exists || !gradeDoc.data().horarios || gradeDoc.data().horarios.length === 0) {
+            grid.innerHTML = "<p style='grid-column:1/-1; font-size:0.7rem; color:red;'>Nenhum horário configurado para este barbeiro.</p>";
+            return;
+        }
+
+        // Horários que o barbeiro marcou como disponíveis no ADM
+        const horariosPermitidos = gradeDoc.data().horarios.sort(); 
+
+        // 2. Mapeia horários ocupados
         let ocupados = [...blSnap.docs.map(d => d.data().hora)];
         agSnap.docs.forEach(doc => {
             const ag = doc.data();
             ocupados.push(ag.hora);
-            if(parseInt(ag.duracao) > 30) ocupados.push(calcularProximo(ag.hora));
+            // Se o serviço agendado for longo, bloqueia o slot seguinte (lógica de 10 em 10 min)
+            let slotsExtras = Math.ceil(parseInt(ag.duracao) / 10) - 1;
+            let proximo = ag.hora;
+            for(let i=0; i < slotsExtras; i++) {
+                proximo = somar10Minutos(proximo);
+                ocupados.push(proximo);
+            }
         });
+
         const duracaoAtual = parseInt(servTexto.split(' - ')[2]) || 30;
+        const slotsNecessarios = Math.ceil(duracaoAtual / 10);
+        
         grid.innerHTML = "";
-        const horas = ["09:00","09:30","10:00","10:30","11:00","11:30","12:00","12:30","13:00","13:30","14:00","14:30","15:00","15:30","16:00","16:30","17:00","17:30","18:00","18:30","19:00","19:30"];
         const agora = new Date();
         const hojeISO = `${agora.getFullYear()}-${String(agora.getMonth()+1).padStart(2,'0')}-${String(agora.getDate()).padStart(2,'0')}`;
-        horas.forEach((h, idx) => {
+
+        // 3. Renderiza apenas os horários da grade do barbeiro
+        horariosPermitidos.forEach((h) => {
             let isOcupado = ocupados.includes(h);
+
+            // Bloqueio por horário passado (se for hoje)
             if (data === hojeISO) {
                 const [hHora, hMin] = h.split(':').map(Number);
                 const dataHoraOpcao = new Date();
                 dataHoraOpcao.setHours(hHora, hMin, 0, 0);
-                const margemSeguranca = new Date(agora.getTime() + 60 * 60000);
+                const margemSeguranca = new Date(agora.getTime() + 40 * 60000); // 40 min de antecedência
                 if (dataHoraOpcao < margemSeguranca) isOcupado = true;
             }
-            if(!isOcupado && duracaoAtual > 30) {
-                const prox = horas[idx+1];
-                if(!prox || ocupados.includes(prox)) isOcupado = true;
+
+            // Verificação de tempo suficiente para o serviço
+            if (!isOcupado && slotsNecessarios > 1) {
+                let tempHora = h;
+                for (let s = 1; s < slotsNecessarios; s++) {
+                    tempHora = somar10Minutos(tempHora);
+                    if (ocupados.includes(tempHora) || !horariosPermitidos.includes(tempHora)) {
+                        isOcupado = true;
+                        break;
+                    }
+                }
             }
+
             const btn = document.createElement("div");
             btn.className = "hora-btn " + (isOcupado ? "ocupada" : "");
             btn.textContent = h;
-            if(!isOcupado) {
+
+            if (!isOcupado) {
                 btn.onclick = () => {
                     document.querySelectorAll(".hora-btn").forEach(e => e.classList.remove("selecionada"));
                     btn.classList.add("selecionada");
@@ -355,7 +416,20 @@
             }
             grid.appendChild(btn);
         });
+
+    } catch (e) {
+        console.error(e);
+        grid.innerHTML = "Erro ao carregar.";
     }
+}
+
+// Função auxiliar para calcular slots de 10 em 10 min
+function somar10Minutos(h) {
+    let [hh, mm] = h.split(':').map(Number);
+    mm += 10;
+    if (mm >= 60) { hh++; mm = 0; }
+    return `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
+}
 
     function calcularProximo(h) {
         let [hh, mm] = h.split(':').map(Number);
